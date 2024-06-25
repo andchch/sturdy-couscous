@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 79
+target-version = ['py311']
+exclude = '''
+    .dev-venv/
+'''
+
+[tool.isort]
+profile = 'black'
+lines_after_imports = 2
+line_length = 79
