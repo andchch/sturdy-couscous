@@ -1,7 +1,8 @@
-version: '3.9'
+version: '3'
 services:
   service-db:
-    image: postgres:16-alpine
+    image: postgres:16
+    container_name: service-db
     volumes:
       - postgresdata:/var/lib/postgresql/data
     env_file:
@@ -11,23 +12,17 @@ services:
     networks:
       - postgres
 
-  pgadmin:
-    container_name: pgadmin4_container
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
-      PGADMIN_DEFAULT_PASSWORD: "admin@admin.com"
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: always
     ports:
-      - "5050:80"
+      - "5050:8080"
     networks:
       - postgres
 
 volumes:
   postgresdata:
-  pgadmin-data:
 
 networks:
   postgres:
