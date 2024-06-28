@@ -9,15 +9,15 @@ app = FastAPI()
 
 
 users = [
-    {"id": 1, "role": "trader", "name": "Alex"},
-    {"id": 2, "role": "trader", "name": "Bob"},
-    {"id": 3, "role": "investor", "name": "Sanyok"},
+    {'id': 1, 'role': 'trader', 'name': 'Alex'},
+    {'id': 2, 'role': 'trader', 'name': 'Bob'},
+    {'id': 3, 'role': 'investor', 'name': 'Sanyok'},
 ]
 
 fake_trades = [
-    {"id": 1, "user_id": 1, "amount": 100},
-    {"id": 2, "user_id": 1, "amount": 200},
-    {"id": 2, "user_id": 2, "amount": 300},
+    {'id': 1, 'user_id': 1, 'amount': 100},
+    {'id': 2, 'user_id': 1, 'amount': 200},
+    {'id': 2, 'user_id': 2, 'amount': 300},
 ]
 
 
@@ -28,8 +28,8 @@ class Trade(BaseModel):
 
 
 class DegreeType(Enum):
-    newbie = "Newbie"
-    expert = "Expert"
+    newbie = 'Newbie'
+    expert = 'Expert'
 
 
 class Degree(BaseModel):
@@ -45,31 +45,31 @@ class User(BaseModel):
     degree: Optional[List[Degree]]
 
 
-@app.get("/")
+@app.get('/')
 def hello():
-    return {"hello": "world"}
+    return {'hello': 'world'}
 
 
-@app.get("/users/{user_id}", response_model=List[User])
+@app.get('/users/{user_id}', response_model=List[User])
 def get_user(user_id: int):
-    return [user for user in users if user.get("id") == user_id]
+    return [user for user in users if user.get('id') == user_id]
 
 
-@app.get("/trades")
+@app.get('/trades')
 def get_trades(limit: int = 1, offset: int = 0):
     return fake_trades[offset:][:limit]
 
 
-@app.post("/users/{user_id}")
+@app.post('/users/{user_id}')
 def change_name(user_id: int, new_name: str):
-    current_user = list(filter(lambda user: user.get("id") == user_id, users))[
+    current_user = list(filter(lambda user: user.get('id') == user_id, users))[
         0
     ]
-    current_user["name"] = new_name
-    return {"status": 200, "data": current_user}
+    current_user['name'] = new_name
+    return {'status': 200, 'data': current_user}
 
 
-@app.post("/trades")
+@app.post('/trades')
 def add_trades(trades: List[Trade]):
     fake_trades.extend(trades)
-    return {"status": 200, "data": fake_trades}
+    return {'status': 200, 'data': fake_trades}
