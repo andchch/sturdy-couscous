@@ -1,10 +1,4 @@
-[tool.isort]
-profile = 'black'
-lines_after_imports = 2
-line_length = 79
-
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
     ".direnv",
@@ -30,17 +24,14 @@ exclude = [
     "build",
     "dist",
     "node_modules",
-    "site-packages",
-    "venv",
-    ".dev-venv"
+    "site-packages"
 ]
 
-# Same as Black.
 line-length = 79
 indent-width = 4
 
-# Assume Python 3.11
-target-version = "py311"
+# Assume Python 3.12
+target-version = "py312"
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
@@ -50,7 +41,7 @@ inline-quotes = "single"
 # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
 # McCabe complexity (`C901`) by default.
 select = ["E4", "E7", "E9", "F", "B", "Q"]
-ignore = ["B008"]
+ignore = ["B008", "B904"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
