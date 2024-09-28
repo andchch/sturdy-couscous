@@ -5,6 +5,8 @@ from sqlmodel import Field
 
 from api.database import Base
 
+# TODO: Check everything :)
+
 
 class RoleBase(Base):
     id: int = Field(primary_key=True)

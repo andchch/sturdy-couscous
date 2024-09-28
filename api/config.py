@@ -29,7 +29,7 @@ def get_db_url() -> str:
     )
 
 
-def get_auth_data() -> dict:
+def get_jwt_settings() -> dict:
     return {'secret_key': settings.SECRET_KEY, 'algorithm': settings.ALGORITHM}
 
 

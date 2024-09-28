@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
 from api.auth.dao import TokenBlacklistDAO
-from api.config import get_auth_data, get_jwt_expiration
+from api.config import get_jwt_settings, get_jwt_expiration
 from api.auth.exceptions import role_forbidden
 from api.users.dao import UserDAO
 from api.users.models import User
@@ -27,7 +27,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 async def verify_token(token: str) -> bool:
     result = await TokenBlacklistDAO.find_one_or_none(token=token)
-    print(result)
     if result is None:
         return True
     else:
@@ -43,11 +42,11 @@ def generate_jwt(
     else:
         expire = datetime.now(timezone.utc) + expires_delta
     payload.update({'exp': expire})
-    auth_data = get_auth_data()
+    jwt_settings = get_jwt_settings()
     token = jwt.encode(
         payload=payload,
-        key=auth_data['secret_key'],
-        algorithm=auth_data['algorithm'],
+        key=jwt_settings['secret_key'],
+        algorithm=jwt_settings['algorithm'],
     )
     return token
 
@@ -57,7 +56,7 @@ async def authenticate_user(email: EmailStr, password: str) -> User | None:
     if (
         not user
         or verify_password(
-            plain_password=password, hashed_password=user.password
+            plain_password=password, hashed_password=user.hashed_password
         )
         is False
     ):
@@ -65,6 +64,7 @@ async def authenticate_user(email: EmailStr, password: str) -> User | None:
     return user
 
 
+# TODO: requires testing
 def require_roles(required_roles: list[str]):
     def decorator(func: Callable):
         @wraps(func)

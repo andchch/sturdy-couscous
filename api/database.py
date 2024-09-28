@@ -9,6 +9,7 @@ from sqlmodel import SQLModel
 from api.config import get_db_url
 
 DATABASE_URL = get_db_url()
+# TODO: Delete on prod
 DATABASE_URL = 'sqlite+aiosqlite:///db.sqlite'
 
 async_engine = create_async_engine(DATABASE_URL)
@@ -30,6 +31,7 @@ class Base(SQLModel):
             tablename += word + '_'
         return f'{tablename[:-1].lower()}s'
 
+    # TODO: Check if pydantic warnings are caused here
     created_at: datetime = Annotated[
         datetime, mapped_column(server_default=func.now())
     ]

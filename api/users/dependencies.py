@@ -5,7 +5,7 @@ from fastapi import Depends
 from jwt.exceptions import InvalidTokenError
 
 from api.auth.exceptions import credentials_exception, revoke_exception
-from api.config import get_auth_data
+from api.config import get_jwt_settings
 from api.auth.auth import oauth2_scheme, verify_token
 from api.users.dao import UserDAO
 from api.users.models import User
@@ -17,9 +17,11 @@ async def get_current_user(
     if not await verify_token(token):
         raise revoke_exception
     try:
-        auth_data = get_auth_data()
+        jwt_settings = get_jwt_settings()
         payload = jwt.decode(
-            token, auth_data['secret_key'], algorithms=[auth_data['algorithm']]
+            token,
+            jwt_settings['secret_key'],
+            algorithms=[jwt_settings['algorithm']],
         )
         email: str = payload.get('sub')
         if email is None:

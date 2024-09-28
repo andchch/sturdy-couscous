@@ -9,13 +9,15 @@ from api.auth.dao import TokenBlacklistDAO
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
 
-#  email === password
 @router.post('/token')
 async def get_token(
     user_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     user = await authenticate_user(
-        email=user_data.username, password=user_data.password
+        # user_data has only username field so use it as email
+        # anyway getting email from frontend here
+        email=user_data.username,
+        password=user_data.password,
     )
     if user is None:
         raise HTTPException(
