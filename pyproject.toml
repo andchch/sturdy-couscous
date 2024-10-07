@@ -75,3 +75,25 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[tool.poetry]
+name = "gamers-social-network"
+version = "0.0.1"
+description = "A social network for gamers"
+authors = ["Andrey Martinich <aimartinich@edu.hse.ru>", "Anna Luneva <aaluneva@edu.hse.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+PyJWT = "^2.9.0"
+bcrypt = "4.0.1"
+pydantic-settings = "^2.5.2"
+sqlalchemy = "^2.0.35"
+asyncpg = "^0.29.0"
+alembic = "^1.13.3"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+fastapi = {extras = ["standard"], version = "^0.115.0"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
