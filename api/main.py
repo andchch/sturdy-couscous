@@ -1,43 +1,64 @@
-# from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-# from fastapi_csrf_protect import CsrfProtect
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from api.recommendation_system import find_best_matches
+from api.models_sql import Base, User, UserProfile
+from api.models_nosql import MongoDB, UserGames
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from api.users.router import router as router_users
-from api.auth.router import router as router_auth
+# SQLAlchemy engine and session setup
+# SQLALCHEMY_DATABASE_URL = 'postgresql://user:password@localhost/dbname'
+SQLALCHEMY_DATABASE_URL = 'sqlite+aiosqlite:///db.sqlite'
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# TODO: Set up CORS
-origins = [
-    'http://localhost',
-    'http://localhost:8000',
-    'http://127.0.0.1',
-    'http://127.0.0.1:8000',
-    '*',
-]
+MONGO_URI = 'mongodb://localhost:27017'
+mongo_db = MongoDB(MONGO_URI)
 
-# TODO: Set up DB creation on startup
-"""@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await create_tables()
-    print('Database is ready')
-    yield
-    await delete_tables()
-    print('Database is cleared')"""
+app = FastAPI()
 
 
-app = FastAPI(title='Gamers social network')
-# app = FastAPI(title='Gamers social network', lifespan=lifespan)
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
-)
+# Создаем таблицы при старте
+#@app.on_event('startup')
+#def startup():
+#    Base.metadata.create_all(bind=engine)
 
-# TODO: Set up CSRF protection
-# csrf = CsrfProtect(api, api.secret_key)
+# Endpoint для получения информации о любимых играх пользователя (MongoDB)
+@app.get('/user/{user_id}/games')
+async def get_user_games(user_id: str):
+    user_games = await mongo_db.get_user_games(user_id)
+    return user_games
 
-app.include_router(router_auth)
-app.include_router(router_users)
+# Endpoint для добавления игр пользователя (MongoDB)
+@app.post('/user/{user_id}/games')
+async def add_user_games(user_id: str, games: UserGames):
+    await mongo_db.add_user_games(games)
+    return {'message': 'Games added'}
+
+# Endpoint для создания нового пользователя (PostgreSQL)
+@app.post('/users/')
+def create_user(username: str, email: str, password: str, db: Session = Depends(get_db)):
+    user = User(username=username, email=email, password=password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+# Endpoint для получения данных профиля пользователя (PostgreSQL)
+@app.get('/users/{user_id}/profile')
+def get_user_profile(user_id: int, db: Session = Depends(get_db)):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+    return profile
+
+# Endpoint для поиска игровых напарников
+@app.get('/users/{user_id}/recommendations')
+async def get_recommendations(user_id: int, db: Session = Depends(get_db)):
+    matches = await find_best_matches(user_id, db)
+    return {'recommended_users': matches}

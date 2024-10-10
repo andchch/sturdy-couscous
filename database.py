@@ -2,21 +2,19 @@ from datetime import datetime
 from typing import Annotated
 
 from sqlalchemy import func
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declared_attr, mapped_column
-from sqlmodel import SQLModel
+# from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
+from sqlalchemy.orm import declared_attr, mapped_column, DeclarativeBase
 
-from api.config import get_db_url
-
-DATABASE_URL = get_db_url()
+# DATABASE_URL = get_db_url()
 # TODO: Delete on prod
-DATABASE_URL = 'sqlite+aiosqlite:///db.sqlite'
+#DATABASE_URL = 'sqlite+aiosqlite:///db.sqlite'
 
-async_engine = create_async_engine(DATABASE_URL)
-async_session_maker = async_sessionmaker(async_engine, expire_on_commit=False)
+#async_engine = create_async_engine(DATABASE_URL)
+#async_session_maker = async_sessionmaker(async_engine, expire_on_commit=False)
 
 
-class Base(SQLModel):
+# class Base(AsyncAttrs, DeclarativeBase):
+class Base(DeclarativeBase):
     __abstract__ = True
 
     @declared_attr.directive

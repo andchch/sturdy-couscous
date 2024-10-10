@@ -4,16 +4,17 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlmodel import SQLModel
+#from sqlmodel import SQLModel
 
 from alembic import context
 
 import sys
 from os.path import dirname, abspath
 
-from api.database import DATABASE_URL, Base  # noqa: F401
-from api.auth.models import TokenBlacklist  # noqa: F401
-from api.users.models import User, Role, UserRole  # noqa: F401
+from database import DATABASE_URL, Base  # noqa: F401
+from api.models_sql import *
+#from api.auth.models import TokenBlacklist  # noqa: F401
+#from api.users.models import User, Role, UserRole  # noqa: F401
 
 
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
@@ -33,7 +34,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = SQLModel.metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
