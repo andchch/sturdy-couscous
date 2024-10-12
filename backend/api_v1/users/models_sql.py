@@ -20,9 +20,9 @@ class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
     hashed_password: Mapped[str]
-    gender: Mapped[GenderEnum]
-    dof: Mapped[datetime]
-    timezone: Mapped[str]
+    gender: Mapped[GenderEnum| None]
+    dof: Mapped[datetime| None]
+    timezone: Mapped[str | None]
     
     profile: Mapped['UserProfile'] = relationship('UserProfile',
                                                   back_populates='user',
