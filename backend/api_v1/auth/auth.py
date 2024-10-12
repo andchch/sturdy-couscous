@@ -7,22 +7,23 @@ from pydantic import EmailStr
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
-from api.auth.dao import TokenBlacklistDAO
-from api.config import get_auth_data, get_jwt_expiration
-from api.auth.exceptions import role_forbidden
-from api.users.dao import UserDAO
-from api.users.models import User
+# from api.auth.dao import TokenBlacklistDAO
+# from api.users.dao import UserDAO
+# from api.users.models import User
+from auth.exceptions import role_forbidden
+from core.config import get_jwt_expiration, get_auth_data
 
-securing_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+secure_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
 def get_password_hash(password: str) -> str:
-    return securing_context.hash(password)
+    return secure_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return securing_context.verify(plain_password, hashed_password)
+    return secure_context.verify(plain_password, hashed_password)
 
 
 async def verify_token(token: str) -> bool:
@@ -34,9 +35,7 @@ async def verify_token(token: str) -> bool:
         return False
 
 
-def generate_jwt(
-    data: dict, expires_delta: timedelta | None = None
-) -> str:  # TODO: Implement refresh_token
+def generate_jwt(data: dict, expires_delta: timedelta | None = None) -> str:  # TODO: Implement refresh_token
     payload = data.copy()
     if expires_delta is None:
         expire = datetime.now(timezone.utc) + timedelta(get_jwt_expiration())

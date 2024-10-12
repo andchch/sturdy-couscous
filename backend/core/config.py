@@ -8,13 +8,17 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
+    
+    MONGO_HOST: str
+    MONGO_PORT: int
+    
     JWT_EXPIRATION_DAYS: int
     SECRET_KEY: str
     ALGORITHM: str
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '..', '.env'
+            os.path.dirname(os.path.abspath(__file__)), '..', '..' ,'.env'
         )
     )
 
@@ -22,10 +26,15 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-def get_db_url() -> str:
+def get_db_uri() -> str:
     return (
         f'postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASSWORD}@'
         f'{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}'
+    )
+    
+def get_mongo_uri() -> str:
+    return (
+        f'mongodb://{settings.MONGO_HOST}:{settings.MONGO_PORT}'
     )
 
 

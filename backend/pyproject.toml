@@ -27,7 +27,7 @@ exclude = [
     "site-packages"
 ]
 
-line-length = 79
+line-length = 89
 indent-width = 4
 
 # Assume Python 3.12
@@ -75,3 +75,32 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[tool.poetry]
+package-mode = false
+name = "gamers-social-network"
+version = "0.0.1"
+description = "A social network for gamers"
+authors = ["Andrey Martinich <aimartinich@edu.hse.ru>", "Anna Luneva <aaluneva@edu.hse.ru>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+PyJWT = "^2.9.0"
+bcrypt = "4.0.1"
+pydantic-settings = "^2.5.2"
+sqlalchemy = "^2.0.35"
+asyncpg = "^0.29.0"
+alembic = "^1.13.3"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+fastapi = {extras = ["standard"], version = "^0.115.0"}
+motor = "^3.6.0"
+numpy = "^2.1.2"
+scikit-learn = "^1.5.2"
+ruff = "^0.6.9"
+aiosqlite = "^0.20.0"
+faker = "^30.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

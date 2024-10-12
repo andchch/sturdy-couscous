@@ -4,16 +4,14 @@ import jwt
 from fastapi import Depends
 from jwt.exceptions import InvalidTokenError
 
-from api.auth.exceptions import credentials_exception, revoke_exception
-from api.config import get_auth_data
-from api.auth.auth import oauth2_scheme, verify_token
-from api.users.dao import UserDAO
-from api.users.models import User
+from auth.exceptions import credentials_exception, revoke_exception
+from core.config import get_auth_data
+from auth.auth import oauth2_scheme, verify_token
+# from api.users.dao import UserDAO
+# from api.users.models import User
 
 
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-) -> User:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
     if not await verify_token(token):
         raise revoke_exception
     try:

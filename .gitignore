@@ -294,3 +294,5 @@ cython_debug/
 .idea/
 
 db.sqlite
+.ruff_cache
+trash

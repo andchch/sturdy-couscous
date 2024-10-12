@@ -4,17 +4,13 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlmodel import SQLModel
 
 from alembic import context
 
 import sys
 from os.path import dirname, abspath
 
-from api.database import DATABASE_URL, Base  # noqa: F401
-from api.auth.models import TokenBlacklist  # noqa: F401
-from api.users.models import User, Role, UserRole  # noqa: F401
-
+from core.database_sql import DATABASE_URI
 
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
@@ -22,7 +18,7 @@ sys.path.insert(0, dirname(dirname(abspath(__file__))))
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option('sqlalchemy.url', DATABASE_URL)
+config.set_main_option('sqlalchemy.url', DATABASE_URI)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -33,7 +29,10 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = SQLModel.metadata
+from core.database_sql import Base  # noqa: E402
+from api_v1.users.models_sql import Platform, User, UserProfile, UserInteraction, UserWeights  # noqa: E402, F401
+
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
