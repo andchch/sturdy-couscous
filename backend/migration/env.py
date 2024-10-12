@@ -10,7 +10,7 @@ from alembic import context
 import sys
 from os.path import dirname, abspath
 
-from backend.core.database_sql import DATABASE_URI, Base
+from core.database_sql import DATABASE_URI
 
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
@@ -29,6 +29,9 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+from core.database_sql import Base  # noqa: E402
+from api_v1.users.models_sql import Platform, User, UserProfile, UserInteraction, UserWeights  # noqa: E402, F401
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

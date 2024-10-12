@@ -3,14 +3,10 @@ from pydantic import BaseModel
 from games.models_nosql import GameModel
 
 
-class UsersInteraction(BaseModel):
+class UserGamesModel(BaseModel):
     user_id: str
-    partner_id: str
-    game_name: str
-    interaction_date: str
-    rating: int
-    success: bool
-
+    games: list[GameModel]
+    
 class PlaytimeModel(BaseModel):
     morning: bool
     afternoon: bool
@@ -23,8 +19,4 @@ class UserPreferencesModel(BaseModel):
     hours_per_week: int
     preferred_days: list[str]  # ['Monday', 'Tuesday', '...'] # TODO: Use Enum
     preferred_genres: list[str]  # ['Action', 'RPG', 'Strategy', ...] # TODO: Use Enum
-    
-class UserGamesModel(BaseModel):
-    user_id: str
-    games: list[GameModel]
     
