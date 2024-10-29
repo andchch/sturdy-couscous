@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from api_v1.users.users_enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssLvlEnum
+from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum
 from core.database_sql import Base, unique_str, idx_str, not_null_str
 
 
@@ -31,7 +31,7 @@ class User(Base):
     
 class UserProfile(Base):
     purpose: Mapped[PurposeEnum]
-    self_ass_lvl: Mapped[SelfAssLvlEnum]
+    self_assessment_lvl: Mapped[SelfAssessmentLvlEnum]
     preferred_communication: Mapped[CommunicationTypeEnum]
     
     user: Mapped['User'] = relationship('User',
@@ -65,7 +65,7 @@ class UserWeights(Base):
                                                 uselist=False,
                                                 lazy='joined')
     purpose_weight: Mapped[float]
-    self_ass_lvl_weight: Mapped[float]
+    self_assessment_lvl_weight: Mapped[float]
     preferred_communication_weight: Mapped[float]
     platforms_weight: Mapped[float]
     playtime_weight: Mapped[float]

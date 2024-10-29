@@ -1,8 +1,8 @@
 """Init
 
-Revision ID: 6ec6b916be0f
+Revision ID: 464048642e9e
 Revises: 
-Create Date: 2024-10-12 23:59:08.340570
+Create Date: 2024-10-29 13:47:44.857268
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6ec6b916be0f'
+revision: str = '464048642e9e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,7 +29,7 @@ def upgrade() -> None:
     )
     op.create_table('user_profiles',
     sa.Column('purpose', sa.Enum('FUN', 'RESULT', name='purposeenum'), nullable=False),
-    sa.Column('self_ass_lvl', sa.Enum('LOW', 'MID', 'HIGH', name='selfasslvlenum'), nullable=False),
+    sa.Column('self_assessment_lvl', sa.Enum('LOW', 'MID', 'HIGH', name='selfassessmentlvlenum'), nullable=False),
     sa.Column('preferred_communication', sa.Enum('VOICE', 'TEXT', 'NO', name='communicationtypeenum'), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
@@ -38,7 +38,7 @@ def upgrade() -> None:
     )
     op.create_table('user_weightss',
     sa.Column('purpose_weight', sa.Float(), nullable=False),
-    sa.Column('self_ass_lvl_weight', sa.Float(), nullable=False),
+    sa.Column('self_assessment_lvl_weight', sa.Float(), nullable=False),
     sa.Column('preferred_communication_weight', sa.Float(), nullable=False),
     sa.Column('platforms_weight', sa.Float(), nullable=False),
     sa.Column('playtime_weight', sa.Float(), nullable=False),
@@ -54,9 +54,9 @@ def upgrade() -> None:
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('hashed_password', sa.String(), nullable=False),
-    sa.Column('gender', sa.Enum('MALE', 'FEMALE', name='genderenum'), nullable=False),
-    sa.Column('dof', sa.DateTime(), nullable=False),
-    sa.Column('timezone', sa.String(), nullable=False),
+    sa.Column('gender', sa.Enum('MALE', 'FEMALE', name='genderenum'), nullable=True),
+    sa.Column('dof', sa.DateTime(), nullable=True),
+    sa.Column('timezone', sa.String(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),

@@ -9,7 +9,7 @@ class PurposeEnum(enum.StrEnum):
     FUN = 'Для развлечения'
     RESULT = 'На результат'
     
-class SelfAssLvlEnum(enum.StrEnum):
+class SelfAssessmentLvlEnum(enum.StrEnum):
     LOW = 'Начинающий'
     MID = 'Средний'
     HIGH = 'Продвинутый'

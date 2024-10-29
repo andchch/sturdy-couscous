@@ -99,6 +99,7 @@ scikit-learn = "^1.5.2"
 ruff = "^0.6.9"
 aiosqlite = "^0.20.0"
 faker = "^30.3.0"
+sqlalchemy-schemadisplay = "^2.0"
 
 
 [build-system]

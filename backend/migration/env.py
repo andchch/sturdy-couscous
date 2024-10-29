@@ -10,7 +10,8 @@ from alembic import context
 import sys
 from os.path import dirname, abspath
 
-from core.database_sql import DATABASE_URI
+from core.database_sql import *
+from api_v1.users.models_sql import *
 
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
