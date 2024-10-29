@@ -38,10 +38,16 @@ class UserProfile(Base):
                                         back_populates='profile',
                                         uselist=False)
     platforms: Mapped[list[Platform]] = relationship(secondary=user_profile_platform_association_table)
-    weights: Mapped['UserWeights'] = relationship('UserWeights',
-                                                  back_populates='user_profile',
-                                                  uselist=False,
-                                                  lazy='joined')
+    
+    purpose_weight: Mapped[float]
+    self_assessment_lvl_weight: Mapped[float]
+    preferred_communication_weight: Mapped[float]
+    platforms_weight: Mapped[float]
+    playtime_weight: Mapped[float]
+    hours_per_week_weight: Mapped[float]
+    preferred_days_weight: Mapped[float]
+    preferred_genres: Mapped[float]
+    
     interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_1',
                                                                            foreign_keys='UserInteraction.user_1_id')
     interactions_as_user_2: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
@@ -58,18 +64,4 @@ class UserInteraction(Base):
                                                  foreign_keys=[user_1_id])
     user_2: Mapped['UserProfile'] = relationship(back_populates='interaction_as_user_2',
                                                  foreign_keys=[user_2_id])
-    
-class UserWeights(Base):
-    user_profile: Mapped['User'] = relationship('UserProfile',
-                                                back_populates='weights',
-                                                uselist=False,
-                                                lazy='joined')
-    purpose_weight: Mapped[float]
-    self_assessment_lvl_weight: Mapped[float]
-    preferred_communication_weight: Mapped[float]
-    platforms_weight: Mapped[float]
-    playtime_weight: Mapped[float]
-    hours_per_week_weight: Mapped[float]
-    preferred_days_weight: Mapped[float]
-    preferred_genres: Mapped[float]
     
