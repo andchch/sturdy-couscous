@@ -1,8 +1,8 @@
 """Init
 
-Revision ID: 464048642e9e
+Revision ID: 6e7c1495c4f2
 Revises: 
-Create Date: 2024-10-29 13:47:44.857268
+Create Date: 2024-10-29 14:08:57.318362
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '464048642e9e'
+revision: str = '6e7c1495c4f2'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,20 +31,14 @@ def upgrade() -> None:
     sa.Column('purpose', sa.Enum('FUN', 'RESULT', name='purposeenum'), nullable=False),
     sa.Column('self_assessment_lvl', sa.Enum('LOW', 'MID', 'HIGH', name='selfassessmentlvlenum'), nullable=False),
     sa.Column('preferred_communication', sa.Enum('VOICE', 'TEXT', 'NO', name='communicationtypeenum'), nullable=False),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_weightss',
     sa.Column('purpose_weight', sa.Float(), nullable=False),
     sa.Column('self_assessment_lvl_weight', sa.Float(), nullable=False),
     sa.Column('preferred_communication_weight', sa.Float(), nullable=False),
     sa.Column('platforms_weight', sa.Float(), nullable=False),
     sa.Column('playtime_weight', sa.Float(), nullable=False),
-    sa.Column('hours_per_week_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_days_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_genres', sa.Float(), nullable=False),
+    sa.Column('hours_per_week_weight', sa.Integer(), nullable=True),
+    sa.Column('preferred_days_weight', sa.Enum('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', name='weekdayenum'), nullable=True),
+    sa.Column('preferred_genres', sa.Enum('RPG', 'SHOOTER', 'MOBA', 'STRATEGY', 'HORROR', 'SIMULATOR', name='genreenum'), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
@@ -96,7 +90,6 @@ def downgrade() -> None:
     op.drop_table('user_interactions')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
-    op.drop_table('user_weightss')
     op.drop_table('user_profiles')
     op.drop_table('platforms')
     # ### end Alembic commands ###

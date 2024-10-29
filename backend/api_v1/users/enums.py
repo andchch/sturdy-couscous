@@ -26,3 +26,12 @@ class RatingEnum(enum.IntEnum):
     FOUR = 4
     FIVE = 5
     
+class WeekdayEnum(enum.StrEnum):
+    MONDAY = 'Понедельник'
+    TUESDAY = 'Вторник'
+    WEDNESDAY = 'Среда'
+    THURSDAY = 'Четверг'
+    FRIDAY = 'Пятница'
+    SATURDAY = 'Суббота'
+    SUNDAY = 'Воскресенье'
+    

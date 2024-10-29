@@ -2,7 +2,8 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum
+from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, WeekdayEnum
+from api_v1.games.enums import GenreEnum
 from core.database_sql import Base, unique_str, idx_str, not_null_str
 
 
@@ -39,14 +40,15 @@ class UserProfile(Base):
                                         uselist=False)
     platforms: Mapped[list[Platform]] = relationship(secondary=user_profile_platform_association_table)
     
-    purpose_weight: Mapped[float]
-    self_assessment_lvl_weight: Mapped[float]
-    preferred_communication_weight: Mapped[float]
-    platforms_weight: Mapped[float]
-    playtime_weight: Mapped[float]
-    hours_per_week_weight: Mapped[float]
-    preferred_days_weight: Mapped[float]
-    preferred_genres: Mapped[float]
+    purpose_weight: Mapped[float] = mapped_column(default=0.1)
+    self_assessment_lvl_weight: Mapped[float] = mapped_column(default=0.1)
+    preferred_communication_weight: Mapped[float] = mapped_column(default=0.1)
+    platforms_weight: Mapped[float] = mapped_column(default=0.1)
+    playtime_weight: Mapped[float] = mapped_column(default=0.1)
+    
+    hours_per_week_weight: Mapped[int| None]
+    preferred_days_weight: Mapped[WeekdayEnum| None]
+    preferred_genres: Mapped[GenreEnum| None] = mapped_column(default=0.1)
     
     interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_1',
                                                                            foreign_keys='UserInteraction.user_1_id')
