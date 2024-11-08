@@ -21,7 +21,7 @@ class UserDAO(BaseDAO[User]):
             query = select(cls.model).where(cls.model.username == username)
             result = await session.execute(query)
             return result.scalar_one_or_none()
-
+    # TODO: check
 class UserProfileDAO(BaseDAO[UserProfile]):
     model = UserProfile
 

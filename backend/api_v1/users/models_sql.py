@@ -37,7 +37,7 @@ class User(Base):
                                                   back_populates='user',
                                                   uselist=False,
                                                   lazy='joined')
-    
+    #TODO: Merge with User class
 class UserProfile(Base):
     purpose: Mapped[PurposeEnum | None]
     self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
