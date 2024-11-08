@@ -18,6 +18,7 @@ unique_str = Annotated[str, mapped_column(unique=True)]
 idx_str = Annotated[str, mapped_column(unique=True, index=True)]
 not_uniuq_idx_str = Annotated[int, mapped_column(nullable=False, index=True)]
 not_null_str = Annotated[str, mapped_column(nullable=False)]
+weight_str = Annotated[float, mapped_column(default=0.2)]
 
 
 class Base(AsyncAttrs, DeclarativeBase):

@@ -35,3 +35,9 @@ class WeekdayEnum(enum.StrEnum):
     SATURDAY = 'Суббота'
     SUNDAY = 'Воскресенье'
     
+class PlatformEnum(enum.StrEnum):
+    PLAYSTATION_4 = 'PlayStation 4'
+    PLAYSTATION_5 = 'PlayStation 5'
+    PC = 'PC'
+    XBOX = 'XBOX'
+    

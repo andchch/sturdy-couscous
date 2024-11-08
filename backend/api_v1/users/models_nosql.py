@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
+from users.enums import WeekdayEnum
 from games.models_nosql import GameModel
-from games.enums import Weekdays, Genres
 
 
 class UserGamesModel(BaseModel):
-    user_id: str
+    user_id: int
     games: list[GameModel]
     
 class PlaytimeModel(BaseModel):
@@ -15,9 +15,7 @@ class PlaytimeModel(BaseModel):
     night: bool
     
 class UserPreferencesModel(BaseModel):
-    user_id: str
+    user_id: int
     playtime: PlaytimeModel
-    hours_per_week: int
-    preferred_days: list[Weekdays]
-    preferred_genres: list[Genres]
+    preferred_days: list[WeekdayEnum]
     
