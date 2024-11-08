@@ -1,9 +1,9 @@
 from typing import Optional, List
 from sqlalchemy import select
 
-from core.dao import BaseDAO
-from api_v1.users.models_sql import User, UserProfile, UserInteraction
-from core.database_sql import async_session
+from backend.core.dao import BaseDAO
+from backend.api_v1.users.models_sql import User, UserInteraction
+from backend.core.database_sql import async_session
 
 class UserDAO(BaseDAO[User]):
     model = User
@@ -22,19 +22,6 @@ class UserDAO(BaseDAO[User]):
             result = await session.execute(query)
             return result.scalar_one_or_none()
     # TODO: check
-class UserProfileDAO(BaseDAO[UserProfile]):
-    model = UserProfile
-
-    @classmethod
-    async def get_by_user_id(cls, user_id: int) -> Optional[UserProfile]:
-        async with async_session() as session:
-            query = select(cls.model).join(User).where(User.id == user_id)
-            result = await session.execute(query)
-            return result.scalar_one_or_none()
-
-    @classmethod
-    async def update_weights(cls, profile_id: int, **weights) -> Optional[UserProfile]:
-        return await cls.update(profile_id, **weights)
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction

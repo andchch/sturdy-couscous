@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi_csrf_protect import CsrfProtect
 
-from api_v1.users.router import user_router
-from api_v1.auth.router import auth_router
+from backend.api_v1.users.router import user_router
+# from api_v1.auth.router import auth_router
 
 
 # TODO: Set up CORS
@@ -37,5 +37,5 @@ app.add_middleware(
 # TODO: Set up CSRF protection
 # csrf = CsrfProtect(api, api.secret_key)
 
-app.include_router(auth_router)
+# app.include_router(auth_router)
 app.include_router(user_router)
