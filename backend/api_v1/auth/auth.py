@@ -7,11 +7,10 @@ from pydantic import EmailStr
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
-# from api.auth.dao import TokenBlacklistDAO
-# from api.users.dao import UserDAO
-# from api.users.models import User
-from auth.exceptions import role_forbidden
-from core.config import get_jwt_expiration, get_auth_data
+from .exceptions import role_forbidden
+from backend.api_v1.users.dao import UserDAO
+from backend.api_v1.users.models_sql import User
+from backend.core.config import get_jwt_expiration, get_auth_data
 
 
 secure_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -26,13 +25,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return secure_context.verify(plain_password, hashed_password)
 
 
-async def verify_token(token: str) -> bool:
-    result = await TokenBlacklistDAO.find_one_or_none(token=token)
-    print(result)
-    if result is None:
-        return True
-    else:
-        return False
+# async def verify_token(token: str) -> bool:
+#     result = await TokenBlacklistDAO.find_one_or_none(token=token)
+#     print(result)
+#     if result is None:
+#         return True
+#     else:
+#         return False
 
 
 def generate_jwt(data: dict, expires_delta: timedelta | None = None) -> str:  # TODO: Implement refresh_token
@@ -52,7 +51,7 @@ def generate_jwt(data: dict, expires_delta: timedelta | None = None) -> str:  # 
 
 
 async def authenticate_user(email: EmailStr, password: str) -> User | None:
-    user = await UserDAO.find_one_or_none(email=email)
+    user = await UserDAO.get_by_email(email)
     if (
         not user
         or verify_password(
