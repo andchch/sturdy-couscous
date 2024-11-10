@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar, Optional, List
 from sqlalchemy import select, update, delete
 
-from backend.core.database_sql import Base, async_session
+from .database_sql import Base, async_session
 
 ModelType = TypeVar('ModelType', bound=Base)
 
