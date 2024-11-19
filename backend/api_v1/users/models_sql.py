@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, LargeBinary, String, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
@@ -35,6 +35,8 @@ class User(Base):
     gender: Mapped[GenderEnum | None]
     dof: Mapped[datetime | None]
     timezone: Mapped[str | None]
+    avatar = Column(LargeBinary)
+    content_type = Column(String)
     
     purpose: Mapped[PurposeEnum | None]
     self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]

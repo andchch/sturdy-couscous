@@ -1,7 +1,10 @@
-from fastapi import APIRouter
+from typing import Annotated
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from backend.api_v1.games.models_nosql import MinecraftModel
 from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
+from backend.api_v1.users.dependencies import get_current_user
+from backend.api_v1.users.models_sql import User
 from backend.core.database_mongo import MongoController
 from backend.api_v1.games.models_nosql import UserGamesModel
 
@@ -10,19 +13,20 @@ user_router = APIRouter(prefix='/user', tags=['Users management'])
 
 
 @user_router.post('/register')
-async def register_user():
-    pass
-
-
-@user_router.post('/create_user')
-async def create_user(username: str, email: str, password: str):
+async def create_user(username: str, email: str, password: str, file: Annotated[bytes, File()]):
+    # if not file.file.content_type.startswith('image/'):
+    #     raise HTTPException(status_code=400, detail='Invalid file type. Please upload an image.')
     try:
+        avatar_data = file
         new_user = await UserDAO.create(
             username=username,
             email=email,
-            hashed_password=password
+            hashed_password=password,
+            avatar=avatar_data,
+            # content_type=file.file.content_type
         )
-        return new_user
+        return {'status': 'goida'}
+        # return new_user
     except Exception as e:
         return {'status': str(e)}
     
@@ -37,6 +41,7 @@ async def create_user_interaction(id1: int, id2: int, game: str, u1r: str, u2r: 
     except Exception as e:
         return {'status': str(e)}
     
+    
 @user_router.post('/create/ugm')
 async def create_ugm(hour: int):
     game = MinecraftModel(hours_played=hour)
@@ -47,5 +52,5 @@ async def create_ugm(hour: int):
 
 
 @user_router.get('/me')
-async def get_me():
-    pass
+async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user

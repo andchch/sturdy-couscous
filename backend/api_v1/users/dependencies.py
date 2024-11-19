@@ -7,14 +7,11 @@ from jwt.exceptions import InvalidTokenError
 from backend.api_v1.users.dao import UserDAO
 from backend.api_v1.users.models_sql import User
 from backend.core.config import get_auth_data
-from backend.api_v1.auth.auth import oauth2_scheme, verify_token
-from backend.api_v1.auth.exceptions import credentials_exception, revoke_exception
-
+from backend.api_v1.auth.auth import oauth2_scheme
+from backend.api_v1.auth.exceptions import credentials_exception
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    # if not await verify_token(token):
-    #     raise revoke_exception
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(
