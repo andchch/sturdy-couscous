@@ -49,5 +49,5 @@ def get_auth_data() -> dict:
     return {'secret_key': settings.SECRET_KEY, 'algorithm': settings.ALGORITHM}
 
 
-def get_jwt_expiration() -> int:
+def get_jwt_expiration():
     return settings.JWT_EXPIRATION_DAYS

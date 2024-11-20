@@ -1,12 +1,14 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
+from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.games.models_nosql import MinecraftModel
 from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User
 from backend.core.database_mongo import MongoController
 from backend.api_v1.games.models_nosql import UserGamesModel
+from backend.api_v1.users.schemas import GetUserResponse
 
 
 user_router = APIRouter(prefix='/user', tags=['Users management'])
@@ -21,7 +23,7 @@ async def create_user(username: str, email: str, password: str, file: Annotated[
         new_user = await UserDAO.create(
             username=username,
             email=email,
-            hashed_password=password,
+            hashed_password=get_password_hash(password),
             avatar=avatar_data,
             # content_type=file.file.content_type
         )
@@ -51,6 +53,9 @@ async def create_ugm(hour: int):
     await mongo.add_user_games(ugm)
 
 
-@user_router.get('/me')
+@user_router.get('/me', response_model=GetUserResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
+    return GetUserResponse(username=current_user.username,
+                           email=current_user.email,
+                           gender=current_user.gender,
+                           date_of_birth=current_user.dof)

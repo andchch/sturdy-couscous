@@ -34,12 +34,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 #         return False
 
 
-def generate_jwt(data: dict, expires_delta: timedelta | None = None) -> str:  # TODO: Implement refresh_token
+def generate_jwt(data: dict) -> str:  # TODO: Implement refresh_token
     payload = data.copy()
-    if expires_delta is None:
-        expire = datetime.now(timezone.utc) + timedelta(get_jwt_expiration())
-    else:
-        expire = datetime.now(timezone.utc) + expires_delta
+    expire = datetime.now(timezone.utc) + timedelta(days=get_jwt_expiration())
     payload.update({'exp': expire})
     auth_data = get_auth_data()
     token = jwt.encode(
@@ -55,7 +52,7 @@ async def authenticate_user(email: EmailStr, password: str) -> User | None:
     if (
         not user
         or verify_password(
-            plain_password=password, hashed_password=user.password
+            plain_password=password, hashed_password=user.hashed_password
         )
         is False
     ):
