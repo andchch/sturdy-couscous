@@ -4,28 +4,26 @@ import jwt
 from fastapi import Depends
 from jwt.exceptions import InvalidTokenError
 
-from auth.exceptions import credentials_exception, revoke_exception
-from core.config import get_auth_data
-from auth.auth import oauth2_scheme, verify_token
-# from api.users.dao import UserDAO
-# from api.users.models import User
+from backend.api_v1.users.dao import UserDAO
+from backend.api_v1.users.models_sql import User
+from backend.core.config import get_auth_data
+from backend.api_v1.auth.auth import oauth2_scheme
+from backend.api_v1.auth.exceptions import credentials_exception
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    if not await verify_token(token):
-        raise revoke_exception
     try:
         auth_data = get_auth_data()
         payload = jwt.decode(
             token, auth_data['secret_key'], algorithms=[auth_data['algorithm']]
         )
-        email: str = payload.get('sub')
+        email = payload.get('sub')
         if email is None:
             raise credentials_exception
     except InvalidTokenError:
         raise credentials_exception
 
-    user = await UserDAO.find_one_or_none(email=email)
+    user = await UserDAO.get_by_email(email)
     if user is None:
         raise credentials_exception
 

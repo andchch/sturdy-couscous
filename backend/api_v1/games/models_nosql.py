@@ -1,25 +1,25 @@
-from typing import Union
 from pydantic import BaseModel
 
 
-class CounterStrike2Model(BaseModel):
-    game_name: str = 'Counter Strike 2'
+class GameModel(BaseModel):
+    game_name: str
     hours_played: int
+
+class CounterStrike2Model(GameModel):
+    game_name: str = 'Counter Strike 2'
     rank: str
     level: int
 
-class Dota2Model(BaseModel):
+class Dota2Model(GameModel):
     game_name: str = 'DOTA 2'
-    hours_played: int
     rank: str
     preferred_position: str
     main_hero: str
 
-class MinecraftModel(BaseModel):
+class MinecraftModel(GameModel):
     game_name: str = 'Minecraft'
-    hours_played: int
 
 
-class GameModel(BaseModel):
-    __root__: Union[CounterStrike2Model, Dota2Model, MinecraftModel]
-    
+class UserGamesModel(BaseModel):
+    user_id: int
+    games: list[CounterStrike2Model | Dota2Model | MinecraftModel]

@@ -7,6 +7,12 @@ credentials_exception = HTTPException(
     headers={'WWW-Authenticate': 'Bearer'},
 )
 
+invalid_login_pass =  HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail='Incorrect email or password',
+    headers={'WWW-Authenticate': 'Bearer'},
+)
+
 revoke_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
     detail='Token has been revoked',

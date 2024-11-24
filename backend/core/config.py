@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     
     MONGO_HOST: str
     MONGO_PORT: int
+    MONGO_DB: str
+    MONGO_USER: str
+    MONGO_PASSWORD: str
     
     JWT_EXPIRATION_DAYS: int
     SECRET_KEY: str
@@ -34,13 +37,17 @@ def get_db_uri() -> str:
     
 def get_mongo_uri() -> str:
     return (
-        f'mongodb://{settings.MONGO_HOST}:{settings.MONGO_PORT}'
+        f'mongodb://{settings.MONGO_USER}:{settings.MONGO_PASSWORD}@'
+        f'{settings.MONGO_HOST}:{settings.MONGO_PORT}'
     )
+    
+def get_mongo_db() -> str:
+    return settings.MONGO_DB
 
 
 def get_auth_data() -> dict:
     return {'secret_key': settings.SECRET_KEY, 'algorithm': settings.ALGORITHM}
 
 
-def get_jwt_expiration() -> int:
+def get_jwt_expiration():
     return settings.JWT_EXPIRATION_DAYS

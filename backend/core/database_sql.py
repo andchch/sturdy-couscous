@@ -5,7 +5,8 @@ from sqlalchemy import DateTime, Integer, func
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
 from sqlalchemy.orm import declared_attr, mapped_column, DeclarativeBase, Mapped
 
-from core.config import get_db_uri
+from backend.core.config import get_db_uri
+# from core.config import get_db_uri # for alembic
 
 DATABASE_URI = get_db_uri()
 # TODO: Delete on prod

@@ -1,22 +1,25 @@
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, LargeBinary, String, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
-from api_v1.games.enums import GenreEnum
-from core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
+from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
+from backend.api_v1.games.enums import GenreEnum
+from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
+# from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
+# from api_v1.games.enums import GenreEnum
+# from core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
 
 
-user_profile_platform_association_table = Table(
-    'user_profile_platform_association',
+user_platform_association_table = Table(
+    'user_platform_association',
     Base.metadata,
-    Column('user_profile_id', ForeignKey('user_profiles.id'), nullable=False),
+    Column('user_id', ForeignKey('users.id'), nullable=False),
     Column('platform_id', ForeignKey('platforms.id'), nullable=False))
 
-user_profile_genre_association_table = Table(
-    'user_profile_genre_association',
+user_genre_association_table = Table(
+    'user_genre_association',
     Base.metadata,
-    Column('user_profile_id', ForeignKey('user_profiles.id'), nullable=False),
+    Column('user_id', ForeignKey('users.id'), nullable=False),
     Column('genre_id', ForeignKey('genres.id'), nullable=False))
 
 class Genre(Base):
@@ -29,19 +32,22 @@ class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
     hashed_password: Mapped[str]
-    gender: Mapped[GenderEnum | None]
+    
+    # gender: Mapped[GenderEnum | None]
+    gender: Mapped[str | None]
+    
     dof: Mapped[datetime | None]
     timezone: Mapped[str | None]
+    avatar = Column(LargeBinary)
+    content_type = Column(String)
     
-    profile: Mapped['UserProfile'] = relationship('UserProfile',
-                                                  back_populates='user',
-                                                  uselist=False,
-                                                  lazy='joined')
-    #TODO: Merge with User class
-class UserProfile(Base):
-    purpose: Mapped[PurposeEnum | None]
-    self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
-    preferred_communication: Mapped[CommunicationTypeEnum | None]
+    # purpose: Mapped[PurposeEnum | None]
+    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
+    # preferred_communication: Mapped[CommunicationTypeEnum | None]
+    purpose: Mapped[str | None]
+    self_assessment_lvl: Mapped[str | None]
+    preferred_communication: Mapped[str | None]
+    
     hours_per_week: Mapped[int | None]
     
     # --- Weights ---
@@ -56,13 +62,13 @@ class UserProfile(Base):
     preferred_genres_weight: Mapped[weight_str]
     # --- Weights ---
     
-    preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_profile_genre_association_table)
-    preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_profile_platform_association_table)
-    user: Mapped['User'] = relationship('User', back_populates='profile', uselist=False)
+    preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_genre_association_table)
+    preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_platform_association_table)
+    
     interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_1',
-                                                                           foreign_keys='UserInteraction.user_1_id')
-    interactions_as_user_2: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
-                                                                           foreign_keys='UserInteraction.user_2_id')
+                                                                            foreign_keys='UserInteraction.user_1_id')
+    interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
+                                                                            foreign_keys='UserInteraction.user_2_id')
     
 class UserInteraction(Base):
     user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
@@ -71,8 +77,8 @@ class UserInteraction(Base):
     user_1_rating: Mapped[RatingEnum]
     user_2_rating: Mapped[RatingEnum]
     
-    user_1: Mapped['UserProfile'] = relationship(back_populates='interaction_as_user_1',
+    user_1: Mapped['User'] = relationship(back_populates='interactions_as_user_1',
                                                  foreign_keys=[user_1_id])
-    user_2: Mapped['UserProfile'] = relationship(back_populates='interaction_as_user_2',
+    user_2: Mapped['User'] = relationship(back_populates='interactions_as_user_1',
                                                  foreign_keys=[user_2_id])
     
