@@ -32,15 +32,22 @@ class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
     hashed_password: Mapped[str]
-    gender: Mapped[GenderEnum | None]
+    
+    # gender: Mapped[GenderEnum | None]
+    gender: Mapped[str | None]
+    
     dof: Mapped[datetime | None]
     timezone: Mapped[str | None]
     avatar = Column(LargeBinary)
     content_type = Column(String)
     
-    purpose: Mapped[PurposeEnum | None]
-    self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
-    preferred_communication: Mapped[CommunicationTypeEnum | None]
+    # purpose: Mapped[PurposeEnum | None]
+    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
+    # preferred_communication: Mapped[CommunicationTypeEnum | None]
+    purpose: Mapped[str | None]
+    self_assessment_lvl: Mapped[str | None]
+    preferred_communication: Mapped[str | None]
+    
     hours_per_week: Mapped[int | None]
     
     # --- Weights ---

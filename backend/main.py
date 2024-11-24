@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api_v1.users.router import user_router
 from backend.api_v1.auth.router import auth_router
+from backend.api_v1.recommendation_system.router import rs_router
 
 
 # TODO: Set up CORS
@@ -39,3 +40,4 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(rs_router)

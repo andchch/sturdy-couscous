@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
+from backend.api_v1.auth.schemas import GetTokenResponse
+
 from .exceptions import invalid_login_pass
 from .auth import authenticate_user, generate_jwt
 
@@ -10,7 +12,7 @@ from .auth import authenticate_user, generate_jwt
 auth_router = APIRouter(prefix='/auth', tags=['Authentication management'])
 
 
-@auth_router.post('/token')
+@auth_router.post('/token', response_model=GetTokenResponse)
 async def get_token(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = await authenticate_user(email=user_data.username, password=user_data.password)
     if user is None:
@@ -18,7 +20,7 @@ async def get_token(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
     access_token = generate_jwt(data={'sub': user.email})
 
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    return {'token': access_token, 'token_type': 'bearer'}
 
 
 # @auth_router.post('/logout')
