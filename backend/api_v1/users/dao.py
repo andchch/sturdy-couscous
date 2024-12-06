@@ -1,9 +1,23 @@
 from typing import Optional, List
 from sqlalchemy import select
 
+from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
 from backend.api_v1.users.models_sql import User, UserInteraction
 from backend.core.database_sql import async_session
+
+class AchievementDAO(BaseDAO[Achievement]):
+    model = Achievement
+    
+    @classmethod
+    async def get_by_app_steam_id(cls, appid: str, steamid: str, achievement: str) -> Optional[Achievement]:
+        async with async_session() as session:
+            query = select(cls.model).where(cls.model.appid == appid,
+                                            cls.model.steamid == steamid,
+                                            cls.model.achievement == achievement)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+        
 
 class UserDAO(BaseDAO[User]):
     model = User
@@ -21,7 +35,13 @@ class UserDAO(BaseDAO[User]):
             query = select(cls.model).where(cls.model.username == username)
             result = await session.execute(query)
             return result.scalar_one_or_none()
-    # TODO: check
+        
+    @classmethod
+    async def get_by_steamid(cls, steamid: str) -> Optional[User]:  
+        async with async_session() as session:
+            query = select(cls.model).where(cls.model.steamid == steamid)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction

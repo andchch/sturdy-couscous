@@ -41,6 +41,8 @@ class User(Base):
     avatar = Column(LargeBinary)
     content_type = Column(String)
     
+    steam_id: Mapped[str | None]
+    
     # purpose: Mapped[PurposeEnum | None]
     # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
     # preferred_communication: Mapped[CommunicationTypeEnum | None]

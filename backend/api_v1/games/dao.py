@@ -1,9 +1,23 @@
 from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy import select
 
 from api_v1.games.models_nosql import GameModel, UserGamesModel
+from backend.api_v1.games.models_sql import Game
+from backend.core.dao import BaseDAO
+from backend.core.database_sql import async_session
 
-class GameDAO:
+class GameDAO(BaseDAO[Game]):
+    model = Game
+    
+    @classmethod
+    async def get_by_app_steam_id(cls, appid: str, steamid: str) -> Optional[Game]:
+        async with async_session() as session:
+            query = select(cls.model).where(cls.model.appid == appid, cls.model.steamid == steamid)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+
+class GameDAO_Mongo:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.games_collection = self.db.user_games
