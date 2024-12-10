@@ -1,5 +1,6 @@
 import asyncio
 from logging.config import fileConfig
+import os
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -10,9 +11,10 @@ from alembic import context
 import sys
 from os.path import dirname, abspath
 
-from core.database_sql import DATABASE_URI
+from backend.core.database_sql import DATABASE_URI
 
-sys.path.insert(0, dirname(dirname(abspath(__file__))))
+# sys.path.insert(0, dirname(dirname(abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,10 +31,11 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from core.database_sql import Base  # noqa: E402
-from api_v1.users.models_sql import *  # noqa: E402, F401, F403
-from api_v1.games.models_sql import *  # noqa: E402, F401, F403
-from api_v1.posts.models_sql import *  # noqa: E402, F401, F403
+from backend.core.database_sql import Base  # noqa: E402
+from backend.api_v1.users.models_sql import *  # noqa: E402, F401, F403
+from backend.api_v1.games.models_sql import *  # noqa: E402, F401, F403
+from backend.api_v1.posts.models_sql import *  # noqa: E402, F401, F403
+from backend.api_v1.communities.models_sql import *  # noqa: E402, F401, F403
 
 target_metadata = Base.metadata
 
