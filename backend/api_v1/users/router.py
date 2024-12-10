@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
+from .exceptions import user_exists_exception
 from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.games.models_nosql import MinecraftModel
 from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
@@ -23,27 +24,30 @@ user_router = APIRouter(prefix='/user', tags=['Users management'])
 @user_router.post('/register', response_model=CreateUserResponse)
 async def create_user(data: CreateUserRequest):
     data = data.model_dump()
+    pot_user = await UserDAO.find_all(username=data['username'])
+    print(pot_user)
+    if pot_user != []:
+        raise user_exists_exception
+    
+    new_user = await UserDAO.create(
+        username=data['username'],
+        email=data['email'],
+        hashed_password=get_password_hash(data['password']),
+    )
+    response = CreateUserResponse(status='good',
+                                  description='')
+    return response
+
+
+@user_router.post('/create_user_interaction')
+async def create_user_interaction(u_id1: int, u_id2: int, game: str, u_rating1: str, u_rating2: str):
     try:
-        new_user = await UserDAO.create(
-            username=data['username'],
-            email=data['email'],
-            hashed_password=get_password_hash(data['password']),
+        new_user_int = await UserInteractionDAO.create_interaction(
+            u_id1, u_id2, game, u_rating1, u_rating2
         )
-        response = CreateUserResponse()
-        return response
+        return {'status': 'good'}
     except Exception as e:
         return {'status': str(e)}
-
-
-# @user_router.post('/create_user_interaction')
-# async def create_user_interaction(id1: int, id2: int, game: str, u1r: str, u2r: str):
-#     try:
-#         new_user_int = await UserInteractionDAO.create_interaction(
-#             id1, id2, game, u1r, u2r
-#         )
-#         return new_user_int
-#     except Exception as e:
-#         return {'status': str(e)}
 
 
 # @user_router.post('/create/ugm')
@@ -67,22 +71,15 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
 
 
 @user_router.patch('/updateme')
-async def update_me(
-    current_user: Annotated[User, Depends(get_current_user)], data: UpdateMeRequest
-):
+async def update_me(current_user: Annotated[User, Depends(get_current_user)], data: UpdateMeRequest):
     user = await UserDAO.get_by_email(current_user.email)
-    print(f'user_id: {user.id}')
-    print(f'model_dump: {data.model_dump()}')
     data = data.model_dump()
     await UserDAO.update(user.id, **data)
     return {'status': 'good'}
 
 
 @user_router.patch('/updatecreds')
-async def update_credentials(
-    current_user: Annotated[User, Depends(get_current_user)],
-    data: UpdateCredentialsRequest,
-):
+async def update_credentials(current_user: Annotated[User, Depends(get_current_user)], data: UpdateCredentialsRequest):
     user = await UserDAO.get_by_email(current_user.email)
     data = data.model_dump()
     await UserDAO.update(user.id, username=data['username'])

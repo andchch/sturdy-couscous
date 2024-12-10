@@ -26,4 +26,4 @@ class GetPostsResponse(BaseModel):
     content: str
     author_id: int
     created_at: datetime
-    media_files: list[MediaFile]
+    media_files: list[MediaFile] | None

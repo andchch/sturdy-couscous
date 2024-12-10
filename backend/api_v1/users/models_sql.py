@@ -78,6 +78,12 @@ class User(Base):
         'Post', back_populates='author', cascade='all, delete-orphan'
     )
     
+    communities: Mapped[list['Community']] = relationship(
+        "Community",
+        secondary="community_memberships",
+        back_populates="members",
+    )
+    
 class UserInteraction(Base):
     user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
     user_2_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)

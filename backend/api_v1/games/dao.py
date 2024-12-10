@@ -2,7 +2,7 @@ from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy import select
 
-from api_v1.games.models_nosql import GameModel, UserGamesModel
+from backend.api_v1.games.models_nosql import GameModel, UserGamesModel
 from backend.api_v1.games.models_sql import Game
 from backend.core.dao import BaseDAO
 from backend.core.database_sql import async_session

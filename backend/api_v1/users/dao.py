@@ -47,12 +47,22 @@ class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction
 
     @classmethod
-    async def get_user_interactions(cls, user_id: int) -> List[UserInteraction]:
+    async def get_all_user_interactions(cls, user_id: int) -> list[UserInteraction] | None:
         async with async_session() as session:
             query = select(cls.model).where(
                 (cls.model.user_1_id == user_id) | 
                 (cls.model.user_2_id == user_id)
             )
+            result = await session.execute(query)
+            return result.scalars().all()
+        
+    @classmethod
+    async def get_user_interactions(cls, user_id: int, game: str) -> list[UserInteraction] | None:
+        async with async_session() as session:
+            query = select(cls.model).where(
+                (cls.model.user_1_id == user_id) | 
+                (cls.model.user_2_id == user_id)
+            ).filter(game=game)
             result = await session.execute(query)
             return result.scalars().all()
 

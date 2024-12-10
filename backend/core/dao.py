@@ -18,6 +18,13 @@ class BaseDAO(Generic[ModelType]):
         async with async_session() as session:
             result = await session.execute(select(cls.model))
             return result.scalars().all()
+        
+    @classmethod
+    async def find_all(cls, **filter_by):
+        async with async_session() as session:
+            query = select(cls.model).filter_by(**filter_by)
+            result = await session.execute(query)
+            return result.scalars().all()
 
     @classmethod
     async def create(cls, **data) -> ModelType:

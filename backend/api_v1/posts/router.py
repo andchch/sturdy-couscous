@@ -1,3 +1,4 @@
+from typing import Optional
 from backend.api_v1.posts.models_sql import Media
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.posts.dao import MediaDAO, PostDAO
@@ -8,10 +9,10 @@ from backend.core.database_s3 import upload_file_to_s3
 posts_router = APIRouter(prefix='/posts', tags=['Posts management'])
 
 
-@posts_router.post('/posts')
+@posts_router.post('/create')
 async def create_new_post(title: str = Form(...),
                           content: str = Form(...),
-                          attachments: list[UploadFile] = File(...),
+                          attachments: Optional[list[UploadFile]] = File(None),
                           current_user=Depends(get_current_user)):
     new_post = await PostDAO.create(title=title, content=content, user_id=current_user.id)
     
@@ -23,7 +24,7 @@ async def create_new_post(title: str = Form(...),
     return {'gewgew': 'gwegweg'}
 
 
-@posts_router.get('/posts', response_model=list[GetPostsResponse])
+@posts_router.get('/load', response_model=list[GetPostsResponse])
 async def read_posts(skip: int = 0, limit: int = 10,
                      ):
     posts = await PostDAO.get(skip, limit)

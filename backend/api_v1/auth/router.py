@@ -31,18 +31,18 @@ async def get_token(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
 
 # Авторизация через OpenID
-@auth_router.get('/login_steam')
-async def login_steam():
-    params = {
-        'openid.ns': 'http://specs.openid.net/auth/2.0',
-        'openid.mode': 'checkid_setup',
-        'openid.return_to': 'http://87.242.103.34:8000/auth/auth_steam',
-        'openid.realm': 'http://87.242.103.34:8000/',
-        'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
-        'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
-    }
-    login_url = f'{"https://steamcommunity.com/openid/login"}?{urlencode(params)}'
-    return RedirectResponse(login_url)
+# @auth_router.get('/login_steam')
+# async def login_steam():
+#     params = {
+#         'openid.ns': 'http://specs.openid.net/auth/2.0',
+#         'openid.mode': 'checkid_setup',
+#         'openid.return_to': 'http://87.242.103.34:8000/auth/auth_steam',
+#         'openid.realm': 'http://87.242.103.34:8000/',
+#         'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
+#         'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+#     }
+#     login_url = f'{"https://steamcommunity.com/openid/login"}?{urlencode(params)}'
+#     return RedirectResponse(login_url)
 
 
 @auth_router.get('/auth_steam')

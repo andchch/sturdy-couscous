@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped
 
 from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
+# from core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
 
 
 class Game(Base):

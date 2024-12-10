@@ -9,6 +9,7 @@ class GetMeResponse(BaseModel):
     
 class CreateUserResponse(BaseModel):
     status: str
+    description: str
     
 # class UpdateCurrentUserRequest(BaseModel):
 #     purpose: str
