@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     MONGO_USER: str
     MONGO_PASSWORD: str
     
+    S3_TENANT_ID: str
+    S3_KEY_ID: str
+    S3_KEY_SECRET: str
+    S3_ENDPOINT: str
+    
     JWT_EXPIRATION_DAYS: int
     SECRET_KEY: str
     ALGORITHM: str
@@ -56,3 +61,7 @@ def get_jwt_expiration():
 
 def get_steam_api_key():
     return settings.STEAM_API_KEY
+
+def get_s3_creds():
+    return [settings.S3_TENANT_ID, settings.S3_KEY_ID,
+            settings.S3_KEY_SECRET, settings.S3_ENDPOINT]
