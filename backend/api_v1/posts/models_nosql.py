@@ -1,5 +1,13 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional, List
+
+class UserBase(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        orm_mode = True
 
 class PostBase(BaseModel):
     title: str
@@ -8,10 +16,14 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
-class PostResponse(PostBase):
-    id: int
-    created_at: str
-    user_id: int
+class MediaFile(BaseModel):
+    file_url: str
+    file_type: str
 
-    class Config:
-        orm_mode = True
+class GetPostsResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    author_id: int
+    created_at: datetime
+    media_files: list[MediaFile]

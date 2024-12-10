@@ -2,12 +2,14 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, LargeBinary, String, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
+from backend.api_v1.posts.models_sql import Post
 from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
 from backend.api_v1.games.enums import GenreEnum
 from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
 # from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
 # from api_v1.games.enums import GenreEnum
 # from core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
+# from api_v1.posts.models_sql import Post
 
 
 user_platform_association_table = Table(
@@ -71,6 +73,10 @@ class User(Base):
                                                                             foreign_keys='UserInteraction.user_1_id')
     interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
                                                                             foreign_keys='UserInteraction.user_2_id')
+    
+    posts: Mapped[list['Post']] = relationship(
+        'Post', back_populates='author', cascade='all, delete-orphan'
+    )
     
 class UserInteraction(Base):
     user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)

@@ -30,7 +30,9 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from core.database_sql import Base  # noqa: E402
-from api_v1.users.models_sql import Platform, User, UserInteraction  # noqa: E402, F401
+from api_v1.users.models_sql import *  # noqa: E402, F401, F403
+from api_v1.games.models_sql import *  # noqa: E402, F401, F403
+from api_v1.posts.models_sql import *  # noqa: E402, F401, F403
 
 target_metadata = Base.metadata
 
