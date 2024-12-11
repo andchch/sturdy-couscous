@@ -7,6 +7,7 @@ from backend.api_v1.posts.models_nosql import PostCreate, GetPostsResponse
 from backend.core.database_s3 import upload_file_to_s3
 
 posts_router = APIRouter(prefix='/posts', tags=['Posts management'])
+S3_MEDIA_BUCKET='bucket-913415'
 
 
 @posts_router.post('/create')
@@ -18,7 +19,7 @@ async def create_new_post(title: str = Form(...),
     
     if attachments is not None:
         for file in attachments:
-            file_url = upload_file_to_s3(file)
+            file_url = upload_file_to_s3(file, S3_MEDIA_BUCKET)
             await MediaDAO.create(file_url=file_url, file_type=file.content_type, post_id=new_post.id)
         
     return {'gewgew': 'gwegweg'}

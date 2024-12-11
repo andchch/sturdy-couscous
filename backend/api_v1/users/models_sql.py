@@ -6,10 +6,6 @@ from backend.api_v1.posts.models_sql import Post
 from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
 from backend.api_v1.games.enums import GenreEnum
 from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
-# from api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, RatingEnum, SelfAssessmentLvlEnum, PlatformEnum
-# from api_v1.games.enums import GenreEnum
-# from core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
-# from api_v1.posts.models_sql import Post
 
 
 user_platform_association_table = Table(
@@ -40,8 +36,7 @@ class User(Base):
     
     dof: Mapped[datetime | None]
     timezone: Mapped[str | None]
-    avatar = Column(LargeBinary)
-    content_type = Column(String)
+    avatar_url = Column(String, nullable=True)
     
     steam_id: Mapped[str | None]
     
@@ -51,7 +46,6 @@ class User(Base):
     purpose: Mapped[str | None]
     self_assessment_lvl: Mapped[str | None]
     preferred_communication: Mapped[str | None]
-    
     hours_per_week: Mapped[int | None]
     
     # --- Weights ---
