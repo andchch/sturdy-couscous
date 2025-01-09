@@ -3,10 +3,7 @@ from pydantic import BaseModel
 
 
 class GetMeResponse(BaseModel):
-    username: str
-    email: str
-    gender: str | None
-    date_of_birth: datetime | None
+    pass
     
 class CreateUserResponse(BaseModel):
     status: str
@@ -40,4 +37,10 @@ class RSResponse(BaseModel):
 
 class UpdateCredentialsRequest(BaseModel):
     username: str | None
+    
+class UpdateMeContactsRequest(BaseModel):
+    vk: str
+    telegram: str
+    steam: str
+    discord: str
     

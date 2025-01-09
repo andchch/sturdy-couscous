@@ -1,9 +1,10 @@
 from typing import Optional, List
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContacts, UserInteraction
 from backend.core.database_sql import async_session
 
 class AchievementDAO(BaseDAO[Achievement]):
@@ -25,9 +26,16 @@ class UserDAO(BaseDAO[User]):
     @classmethod
     async def get_by_email(cls, email: str) -> Optional[User]:
         async with async_session() as session:
-            query = select(cls.model).where(cls.model.email == email)
+            query = ( 
+                select(cls.model)
+                .where(cls.model.email == email)
+                .options(
+                    joinedload(User.contacts)
+                    )
+            )
             result = await session.execute(query)
             return result.scalar_one_or_none()
+        
 
     @classmethod
     async def get_by_username(cls, username: str) -> Optional[User]:
@@ -42,6 +50,25 @@ class UserDAO(BaseDAO[User]):
             query = select(cls.model).where(cls.model.steamid == steamid)
             result = await session.execute(query)
             return result.scalar_one_or_none()
+        
+    @classmethod
+    async def update_contacts(cls, user_id: int, data: dict) -> Optional[UserContacts]:
+        async with async_session() as session:
+            stmt = select(User).options(joinedload(User.contacts)).where(User.id == user_id)
+            result = await session.execute(stmt)
+            user = result.scalars().first()
+            print(vars(user))
+            if not user:
+                return None
+
+            if user.contacts:
+                for key, val in data.items():
+                    setattr(user.contacts, key, val)
+            else:
+                user.contacts = UserContacts(**data)
+
+            await session.commit()
+            return user.contacts
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction

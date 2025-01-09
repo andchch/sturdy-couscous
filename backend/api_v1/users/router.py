@@ -8,10 +8,10 @@ from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.games.models_nosql import MinecraftModel
 from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
 from backend.api_v1.users.dependencies import get_current_user
-from backend.api_v1.users.models_sql import User
+from backend.api_v1.users.models_sql import User, UserContacts
 from backend.core.database_mongo import MongoController
 from backend.api_v1.games.models_nosql import UserGamesModel
-from backend.api_v1.users.schemas import GetMeResponse
+from backend.api_v1.users.schemas import GetMeResponse, UpdateMeContactsRequest
 from backend.api_v1.users.schemas import (
     CreateUserResponse,
     UpdateMeRequest,
@@ -63,15 +63,15 @@ async def create_ugm(hour: int):
 '''
 
 
-@user_router.get('/me', response_model=GetMeResponse)
+@user_router.get('/me')#, response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     response = GetMeResponse(
         username=current_user.username,
         email=current_user.email,
         gender=current_user.gender,
-        date_of_birth=current_user.date_of_birth
+        date_of_birth=current_user.dof
     )
-    return response
+    return current_user
 
 @user_router.patch('/{user_id}/change-password')
 async def change_password(user_id: int, new_password: str = Form(...)):
@@ -81,7 +81,14 @@ async def change_password(user_id: int, new_password: str = Form(...)):
     else:
         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
         return {'status': 'password has been changed'}
-
+    
+@user_router.patch('/update-me-contacts')
+async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
+                             data: UpdateMeContactsRequest):
+    await UserDAO.update_contacts(current_user.id, data.model_dump())
+    
+    return {'status': 'good'}
+    
 
 @user_router.patch('/update-me')
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
@@ -90,8 +97,6 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     preferred_communication: str = Form(None),
                     hours_per_week: int = Form(None),
                     new_avatar: UploadFile | None = File(None)):
-                    #data: UpdateMeRequest):
-    # data = data.model_dump()
     if new_avatar is not None:
         file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
         await UserDAO.update(current_user.id, gender=gender, purpose=purpose,
