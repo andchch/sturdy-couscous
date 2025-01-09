@@ -7,18 +7,10 @@ class GetMeResponse(BaseModel):
     email: str
     gender: str | None
     date_of_birth: datetime | None
-    avatar_url: str | None
-    steam_id: str | None
-    purpose: str | None
-    self_assessment_lvl: str | None
-    preferred_communication: str | None
-    hours_per_week: int | None
-    
     
 class CreateUserResponse(BaseModel):
     status: str
     description: str
-    
     
 # class UpdateCurrentUserRequest(BaseModel):
 #     purpose: str

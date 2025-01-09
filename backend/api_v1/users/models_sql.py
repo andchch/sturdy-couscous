@@ -25,7 +25,53 @@ class Genre(Base):
 
 class Platform(Base):
     name: Mapped[PlatformEnum]
+    
+class UserContacts(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    vk: Mapped[str | None]
+    telegram: Mapped[str | None]
+    steam: Mapped[str | None]
+    discord: Mapped[str | None]
+    
+    user: Mapped['User'] = relationship('User', back_populates='contacts')
+    
+class UserWeights(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    # --- Weights ---
+    purpose_weight: Mapped[weight_str]
+    self_assessment_lvl_weight: Mapped[weight_str]
+    preferred_communication_weight: Mapped[weight_str]
+    preferred_platforms_weight: Mapped[weight_str]
+    # ---- NoSQL ----
+    playtime_weight: Mapped[weight_str]
+    hours_per_week_weight: Mapped[weight_str]
+    preferred_days_weight: Mapped[weight_str]
+    preferred_genres_weight: Mapped[weight_str]
+    # --- Weights ---
+    
+    user: Mapped['User'] = relationship('User', back_populates='weights')
 
+class UserIntegroTable(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    
+    steam_id: Mapped[str | None]
+    
+    user: Mapped['User'] = relationship('User', back_populates='integro')
+    
+class UserInfo(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    
+    # purpose: Mapped[PurposeEnum | None]
+    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
+    # preferred_communication: Mapped[CommunicationTypeEnum | None]
+    purpose: Mapped[str | None]
+    self_assessment_lvl: Mapped[str | None]
+    preferred_communication: Mapped[str | None]
+    
+    hours_per_week: Mapped[int | None]
+    
+    user: Mapped['User'] = relationship('User', back_populates='info')
+    
 class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
@@ -36,6 +82,22 @@ class User(Base):
     
     dof: Mapped[datetime | None]
     avatar_url: Mapped[str | None]
+    
+    contacts: Mapped['UserContacts'] = relationship(
+        'UserContacts', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    )
+    
+    weights: Mapped['UserWeights'] = relationship(
+        'UserWeights', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    )
+    
+    integro: Mapped['UserIntegroTable'] = relationship(
+        'UserIntegroTable', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    )
+    
+    info: Mapped['UserInfo'] = relationship(
+        'UserInfo', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    )
     
     preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_genre_association_table)
     preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_platform_association_table)
@@ -54,38 +116,6 @@ class User(Base):
         secondary="community_memberships",
         back_populates="members",
     )
-    
-class UserContacts(Base):
-    vk: Mapped[str | None]
-    telegram: Mapped[str | None]
-    steam: Mapped[str | None]
-    discord: Mapped[str | None]
-    
-class UserInfo(Base):
-    # purpose: Mapped[PurposeEnum | None]
-    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
-    # preferred_communication: Mapped[CommunicationTypeEnum | None]
-    purpose: Mapped[str | None]
-    self_assessment_lvl: Mapped[str | None]
-    preferred_communication: Mapped[str | None]
-    
-    hours_per_week: Mapped[int | None]
-
-class UserIntegroTable(Base):
-    steam_id: Mapped[str | None]
-
-class UserWeights(Base):
-    # --- Weights ---
-    purpose_weight: Mapped[weight_str]
-    self_assessment_lvl_weight: Mapped[weight_str]
-    preferred_communication_weight: Mapped[weight_str]
-    preferred_platforms_weight: Mapped[weight_str]
-    # ---- NoSQL ----
-    playtime_weight: Mapped[weight_str]
-    hours_per_week_weight: Mapped[weight_str]
-    preferred_days_weight: Mapped[weight_str]
-    preferred_genres_weight: Mapped[weight_str]
-    # --- Weights ---
     
 class UserInteraction(Base):
     user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)

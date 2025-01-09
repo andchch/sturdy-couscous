@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: ad5f264e889d
+Revision ID: ce37b0572f53
 Revises: 
-Create Date: 2024-12-10 19:36:15.129688
+Create Date: 2025-01-09 13:38:34.836943
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ad5f264e889d'
+revision: str = 'ce37b0572f53'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -55,27 +55,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
-    sa.Column('avatar', sa.LargeBinary(), nullable=True),
-    sa.Column('content_type', sa.String(), nullable=True),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('gender', sa.String(), nullable=True),
     sa.Column('dof', sa.DateTime(), nullable=True),
-    sa.Column('timezone', sa.String(), nullable=True),
-    sa.Column('steam_id', sa.String(), nullable=True),
-    sa.Column('purpose', sa.String(), nullable=True),
-    sa.Column('self_assessment_lvl', sa.String(), nullable=True),
-    sa.Column('preferred_communication', sa.String(), nullable=True),
-    sa.Column('hours_per_week', sa.Integer(), nullable=True),
-    sa.Column('purpose_weight', sa.Float(), nullable=False),
-    sa.Column('self_assessment_lvl_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_communication_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_platforms_weight', sa.Float(), nullable=False),
-    sa.Column('playtime_weight', sa.Float(), nullable=False),
-    sa.Column('hours_per_week_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_days_weight', sa.Float(), nullable=False),
-    sa.Column('preferred_genres_weight', sa.Float(), nullable=False),
+    sa.Column('avatar_url', sa.String(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
@@ -94,11 +79,47 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_table('user_contactss',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('vk', sa.String(), nullable=True),
+    sa.Column('telegram', sa.String(), nullable=True),
+    sa.Column('steam', sa.String(), nullable=True),
+    sa.Column('discord', sa.String(), nullable=True),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
+    )
     op.create_table('user_genre_association',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('genre_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['genre_id'], ['genres.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
+    )
+    op.create_table('user_infos',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('purpose', sa.String(), nullable=True),
+    sa.Column('self_assessment_lvl', sa.String(), nullable=True),
+    sa.Column('preferred_communication', sa.String(), nullable=True),
+    sa.Column('hours_per_week', sa.Integer(), nullable=True),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
+    )
+    op.create_table('user_integro_tables',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('steam_id', sa.String(), nullable=True),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
     op.create_table('user_interactions',
     sa.Column('user_1_id', sa.Integer(), nullable=False),
@@ -120,6 +141,33 @@ def upgrade() -> None:
     sa.Column('platform_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['platform_id'], ['platforms.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
+    )
+    op.create_table('user_weightss',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('purpose_weight', sa.Float(), nullable=False),
+    sa.Column('self_assessment_lvl_weight', sa.Float(), nullable=False),
+    sa.Column('preferred_communication_weight', sa.Float(), nullable=False),
+    sa.Column('preferred_platforms_weight', sa.Float(), nullable=False),
+    sa.Column('playtime_weight', sa.Float(), nullable=False),
+    sa.Column('hours_per_week_weight', sa.Float(), nullable=False),
+    sa.Column('preferred_days_weight', sa.Float(), nullable=False),
+    sa.Column('preferred_genres_weight', sa.Float(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
+    )
+    op.create_table('community_memberships',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('community_id', sa.Integer(), nullable=False),
+    sa.Column('role', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.ForeignKeyConstraint(['community_id'], ['communities.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'community_id')
     )
     op.create_table('posts',
     sa.Column('title', sa.String(length=255), nullable=False),
@@ -150,11 +198,16 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('medias')
     op.drop_table('posts')
+    op.drop_table('community_memberships')
+    op.drop_table('user_weightss')
     op.drop_table('user_platform_association')
     op.drop_index(op.f('ix_user_interactions_user_2_id'), table_name='user_interactions')
     op.drop_index(op.f('ix_user_interactions_user_1_id'), table_name='user_interactions')
     op.drop_table('user_interactions')
+    op.drop_table('user_integro_tables')
+    op.drop_table('user_infos')
     op.drop_table('user_genre_association')
+    op.drop_table('user_contactss')
     op.drop_table('communities')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')

@@ -25,10 +25,9 @@ S3_MEDIA_BUCKET='user.media'
 
 
 @user_router.post('/register', response_model=CreateUserResponse)
-async def create_user(data: CreateUserRequest):
+async def register_user(data: CreateUserRequest):
     data = data.model_dump()
     pot_user = await UserDAO.find_all(username=data['username'])
-    print(pot_user)
     if pot_user != []:
         raise user_exists_exception
     
@@ -41,46 +40,50 @@ async def create_user(data: CreateUserRequest):
                                   description='')
     return response
 
-#TODO:check
-# @user_router.post('/create_user_interaction')
-# async def create_user_interaction(u_id1: int, u_id2: int, game: str, u_rating1: str, u_rating2: str):
-#     try:
-#         new_user_int = await UserInteractionDAO.create_interaction(
-#             u_id1, u_id2, game, u_rating1, u_rating2
-#         )
-#         return {'status': 'good'}
-#     except Exception as e:
-#         return {'status': str(e)}
+'''
+TODO:check
+@user_router.post('/create_user_interaction')
+async def create_user_interaction(u_id1: int, u_id2: int, game: str, u_rating1: str, u_rating2: str):
+    try:
+        new_user_int = await UserInteractionDAO.create_interaction(
+            u_id1, u_id2, game, u_rating1, u_rating2
+        )
+        return {'status': 'good'}
+    except Exception as e:
+        return {'status': str(e)}
 
 
-# @user_router.post('/create/ugm')
-# async def create_ugm(hour: int):
-#     game = MinecraftModel(hours_played=hour)
-#     ugm = UserGamesModel(user_id=1, games=[game])
-#     mongo = MongoController()
-#     print(ugm.model_dump())
-#     await mongo.add_user_games(ugm)
+@user_router.post('/create/ugm')
+async def create_ugm(hour: int):
+    game = MinecraftModel(hours_played=hour)
+    ugm = UserGamesModel(user_id=1, games=[game])
+    mongo = MongoController()
+    print(ugm.model_dump())
+    await mongo.add_user_games(ugm)
+'''
 
 
 @user_router.get('/me', response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
-    avatar_url_str = str(current_user.avatar_url) if current_user.avatar_url is not None else None
     response = GetMeResponse(
         username=current_user.username,
         email=current_user.email,
         gender=current_user.gender,
-        date_of_birth=current_user.dof,
-        avatar_url=avatar_url_str,
-        steam_id=current_user.steam_id,
-        purpose=current_user.purpose,
-        self_assessment_lvl=current_user.self_assessment_lvl,
-        preferred_communication=current_user.preferred_communication,
-        hours_per_week=current_user.hours_per_week
+        date_of_birth=current_user.date_of_birth
     )
     return response
 
+@user_router.patch('/{user_id}/change-password')
+async def change_password(user_id: int, new_password: str = Form(...)):
+    user = await UserDAO.get_by_id(user_id)
+    if user is None:
+        raise user_not_exists_exception
+    else:
+        await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
+        return {'status': 'password has been changed'}
 
-@user_router.patch('/updateme')
+
+@user_router.patch('/update-me')
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     gender: str = Form(None), purpose: str = Form(None),
                     self_assessment_lvl: str = Form(None),
@@ -102,6 +105,7 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                             preferred_communication=preferred_communication,
                             hours_per_week=hours_per_week)
     return {'status': 'good'}
+
 
 @user_router.get('/get-avatar')
 async def get_avatar(user_id: int):
