@@ -1,9 +1,9 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from backend.core.database_s3 import upload_file_to_s3
+from backend.core.database_s3 import get_user_avatar, upload_file_to_s3
 
-from .exceptions import user_exists_exception
+from .exceptions import user_exists_exception, user_not_exists_exception
 from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.games.models_nosql import MinecraftModel
 from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
@@ -103,10 +103,16 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                             hours_per_week=hours_per_week)
     return {'status': 'good'}
 
-
-# @user_router.patch('/updatecreds')
-# async def update_credentials(current_user: Annotated[User, Depends(get_current_user)], data: UpdateCredentialsRequest):
-#     user = await UserDAO.get_by_email(current_user.email)
-#     data = data.model_dump()
-#     await UserDAO.update(user.id, username=data['username'])
-#     return {'status': 'good'}
+@user_router.get('/get-avatar')
+async def get_avatar(user_id: int):
+    user = await UserDAO.get_by_id(user_id)
+    if user is None:
+        raise user_not_exists_exception
+    else:
+        if user.avatar_url is not None:
+            file_name = user.avatar_url.split('/')[-1]
+            print(file_name)
+            avatar_url = get_user_avatar(file_name)
+            return {'avatar_url': f'{avatar_url}'}
+        else:
+            return {'avatar_url': 'no avatar'}

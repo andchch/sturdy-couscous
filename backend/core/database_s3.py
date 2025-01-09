@@ -22,5 +22,14 @@ def upload_file_to_s3(file: UploadFile, bucket: str) -> str:
     file_url = f'https://{get_s3_creds()[3]}/{bucket}/{unique_filename}'
     return file_url
 
-def get_file_s3() -> str:
-    get_object_response = s3_client.get_object(Bucket=bucket,Key='py_script.py')
+def get_user_avatar(name: str) -> str:
+    # Generate the S3 presigned URL
+    s3_presigned_url = s3_client.generate_presigned_url(
+        ClientMethod='get_object',
+        Params={
+            'Bucket': 'user.media',
+            'Key': f'{name}'
+        },
+        ExpiresIn=3600 # 1 hour
+    )
+    return s3_presigned_url

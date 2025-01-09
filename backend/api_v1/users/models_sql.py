@@ -35,30 +35,7 @@ class User(Base):
     gender: Mapped[str | None]
     
     dof: Mapped[datetime | None]
-    timezone: Mapped[str | None]
-    avatar_url = Column(String, nullable=True)
-    
-    steam_id: Mapped[str | None]
-    
-    # purpose: Mapped[PurposeEnum | None]
-    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
-    # preferred_communication: Mapped[CommunicationTypeEnum | None]
-    purpose: Mapped[str | None]
-    self_assessment_lvl: Mapped[str | None]
-    preferred_communication: Mapped[str | None]
-    hours_per_week: Mapped[int | None]
-    
-    # --- Weights ---
-    purpose_weight: Mapped[weight_str]
-    self_assessment_lvl_weight: Mapped[weight_str]
-    preferred_communication_weight: Mapped[weight_str]
-    preferred_platforms_weight: Mapped[weight_str]
-    # ---- NoSQL ----
-    playtime_weight: Mapped[weight_str]
-    hours_per_week_weight: Mapped[weight_str]
-    preferred_days_weight: Mapped[weight_str]
-    preferred_genres_weight: Mapped[weight_str]
-    # --- Weights ---
+    avatar_url: Mapped[str | None]
     
     preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_genre_association_table)
     preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_platform_association_table)
@@ -77,6 +54,38 @@ class User(Base):
         secondary="community_memberships",
         back_populates="members",
     )
+    
+class UserContacts(Base):
+    vk: Mapped[str | None]
+    telegram: Mapped[str | None]
+    steam: Mapped[str | None]
+    discord: Mapped[str | None]
+    
+class UserInfo(Base):
+    # purpose: Mapped[PurposeEnum | None]
+    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
+    # preferred_communication: Mapped[CommunicationTypeEnum | None]
+    purpose: Mapped[str | None]
+    self_assessment_lvl: Mapped[str | None]
+    preferred_communication: Mapped[str | None]
+    
+    hours_per_week: Mapped[int | None]
+
+class UserIntegroTable(Base):
+    steam_id: Mapped[str | None]
+
+class UserWeights(Base):
+    # --- Weights ---
+    purpose_weight: Mapped[weight_str]
+    self_assessment_lvl_weight: Mapped[weight_str]
+    preferred_communication_weight: Mapped[weight_str]
+    preferred_platforms_weight: Mapped[weight_str]
+    # ---- NoSQL ----
+    playtime_weight: Mapped[weight_str]
+    hours_per_week_weight: Mapped[weight_str]
+    preferred_days_weight: Mapped[weight_str]
+    preferred_genres_weight: Mapped[weight_str]
+    # --- Weights ---
     
 class UserInteraction(Base):
     user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
