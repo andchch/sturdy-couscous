@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 
 from backend.api_v1.communities.dao import CommunityDAO, CommunityMembershipDAO
 from backend.api_v1.communities.models_sql import Community
-from backend.api_v1.communities.schemes import CommunityCreate, CommunityCreateResponse, CommunityJoinResponse, CommunityListResponse
+from backend.api_v1.communities.schemes import CommunityCreate, CommunityCreateResponse, CommunityJoinResponse, CommunityListResponse, EditCommunity
 from backend.api_v1.communities.utilities import serialize_community_with_members
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User
@@ -51,8 +51,22 @@ async def join_community(community_id: int, current_user: Annotated[User, Depend
     return {"message": f"User {current_user.id} joined community {community.name}"}
 
 
-@community_router.get("/get", response_model=CommunityListResponse)
+@community_router.patch('/{community_id}/edit')
+async def edit_community(community_id: int, new_data: EditCommunity):
+    await CommunityDAO.update(community_id, **new_data.model_dump())
+    return {'status': 'haghaga'}
+    
+
+@community_router.get("/list_communities", response_model=list[CommunityListResponse])
 async def list_communities(skip: int = 0, limit: int = 10):
     communities = await CommunityDAO.get(offset=skip, limit=limit)
     return [serialize_community_with_members(community) for community in communities]
-    
+
+@community_router.get('/{community_id}')
+async def get_community(community_id: int, skip: int = 0, limit: int = 10):
+    community = await CommunityDAO.get(community_id, skip, limit)
+    community = community[0]
+    print(community)
+    print(vars(community))
+    # print(community.__dict__)
+    return {'sss': 'sss'}

@@ -22,3 +22,7 @@ class CommunityListResponse(BaseModel):
     description: str
     members: list[Member] | None
     
+class EditCommunity(BaseModel):
+    name: str
+    description: str
+    

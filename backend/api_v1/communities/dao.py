@@ -20,11 +20,13 @@ class CommunityDAO(BaseDAO[Community]):
             return result.scalar_one_or_none()
         
     @classmethod
-    async def get(cls, offset, limit) -> list[Community]:
+    async def get(cls, community_id, offset, limit) -> list[Community]:
         async with async_session() as session:
             query = (
-                select(cls.model)
-                .options(joinedload(cls.model.members))
+                select(cls.model).where(cls.model.id == community_id)
+                .options(joinedload(cls.model.members),
+                         joinedload(cls.model.posts)
+                         )
                 .offset(offset)
                 .limit(limit)
             )

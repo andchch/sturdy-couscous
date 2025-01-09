@@ -27,7 +27,7 @@ origins = [
 #     await delete_tables()
 #     print('Database is cleared')
     
-app = FastAPI(title='Gamers social network')
+app = FastAPI(title='Gamers social network', version='0.1.0')
 # app = FastAPI(title='Gamers social network', lifespan=lifespan)
 
 app.add_middleware(

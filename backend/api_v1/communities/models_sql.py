@@ -25,7 +25,6 @@ class Community(Base):
     description: Mapped[str]
     creator_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
 
-    # Связь с пользователями через CommunityMembership
     members: Mapped[list['User']] = relationship(
         "User",
         secondary="community_memberships",
