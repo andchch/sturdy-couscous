@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, LargeBinary, String, Table
+from sqlalchemy import Column, ForeignKey, LargeBinary, String, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from backend.api_v1.posts.models_sql import Post
@@ -25,6 +25,16 @@ class Genre(Base):
 
 class Platform(Base):
     name: Mapped[PlatformEnum]
+    
+class UserFollow(Base):
+    id = None
+    follower_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    followed_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+
+    follower: Mapped["User"] = relationship("User", foreign_keys=[follower_id], back_populates="following")
+    followed: Mapped["User"] = relationship("User", foreign_keys=[followed_id], back_populates="followers")
+
+    __table_args__ = (UniqueConstraint("follower_id", "followed_id", name="uq_user_follow"),)
     
 class UserContacts(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
@@ -97,6 +107,14 @@ class User(Base):
     
     info: Mapped['UserInfo'] = relationship(
         'UserInfo', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    )
+    
+    following: Mapped[list["UserFollow"]] = relationship(
+        "UserFollow", foreign_keys=[UserFollow.follower_id], back_populates="follower", cascade="all, delete-orphan"
+    )
+    
+    followers: Mapped[list["UserFollow"]] = relationship(
+        "UserFollow", foreign_keys=[UserFollow.followed_id], back_populates="followed", cascade="all, delete-orphan"
     )
     
     preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_genre_association_table)

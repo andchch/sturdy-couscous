@@ -3,12 +3,12 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from backend.core.database_s3 import get_user_avatar, upload_file_to_s3
 
-from .exceptions import user_exists_exception, user_not_exists_exception
+from .exceptions import user_exists_exception, user_not_exists_exception, self_follow_exception, not_followed_exception
 from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.games.models_nosql import MinecraftModel
-from backend.api_v1.users.dao import UserDAO, UserInteractionDAO
+from backend.api_v1.users.dao import UserDAO, UserFollowDAO, UserInteractionDAO
 from backend.api_v1.users.dependencies import get_current_user
-from backend.api_v1.users.models_sql import User, UserContacts
+from backend.api_v1.users.models_sql import User, UserContacts, UserFollow
 from backend.core.database_mongo import MongoController
 from backend.api_v1.games.models_nosql import UserGamesModel
 from backend.api_v1.users.schemas import GetMeResponse, UpdateMeContactsRequest
@@ -111,7 +111,6 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                             hours_per_week=hours_per_week)
     return {'status': 'good'}
 
-
 @user_router.get('/get-avatar')
 async def get_avatar(user_id: int):
     user = await UserDAO.get_by_id(user_id)
@@ -125,3 +124,34 @@ async def get_avatar(user_id: int):
             return {'avatar_url': f'{avatar_url}'}
         else:
             return {'avatar_url': 'no avatar'}
+
+@user_router.post("/{user_id}/follow")
+async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
+    if current_user.id == user_id:
+        raise self_follow_exception
+
+    await UserFollowDAO.follow(current_user.id, user_id)
+    
+    return {"message": "Подписка успешна"}
+
+@user_router.delete("/{user_id}/unfollow")
+async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
+    is_followed = await UserFollow.check_follow(current_user.id, user_id)
+    
+    if not is_followed:
+        raise not_followed_exception
+    else:
+        UserFollowDAO.delete(is_followed.id)
+        return {"message": "Вы отписались"}
+
+@user_router.get("/{user_id}/followers")
+async def get_followers(user_id: int):
+    followers = UserFollowDAO.find_all(UserFollow.followed_id == user_id)
+    
+    return {"followers": [{"id": f.follower.id, "username": f.follower.username} for f in followers]}
+
+@user_router.get("/{user_id}/following")
+async def get_following(user_id: int):
+    following = UserFollowDAO.find_all(UserFollow.follower_id == user_id)
+    
+    return {"following": [{"id": f.followed.id, "username": f.followed.username} for f in following]}

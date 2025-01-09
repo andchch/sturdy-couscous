@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserContacts, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInteraction
 from backend.core.database_sql import async_session
 
 class AchievementDAO(BaseDAO[Achievement]):
@@ -108,4 +108,26 @@ class UserInteractionDAO(BaseDAO[UserInteraction]):
             game=game,
             user_1_rating=user_1_rating,
             user_2_rating=user_2_rating
-        ) 
+        )
+        
+class UserFollowDAO(BaseDAO[UserFollow]):
+    model = UserFollow
+    
+    @classmethod
+    async def follow(cls, follower_id: int, followed_id: int) -> UserFollow:
+        return await cls.create(follower_id=follower_id, followed_id=followed_id)
+    
+    @classmethod
+    async def check_follow(cls, follower_id: int, followed_id: int) -> UserFollow:
+        async with async_session() as session:
+            follow = await session.execute(
+                select(UserFollow).where(UserFollow.follower_id == follower_id.id,
+                                        UserFollow.followed_id == followed_id)
+                )
+            follow = follow.scalars().first()
+            
+            if not follow:
+                return None
+            else:
+                return follow
+            
