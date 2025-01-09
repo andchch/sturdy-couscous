@@ -16,10 +16,26 @@ class PostDAO(BaseDAO[Post]):
                 select(cls.model)
                 .options(
                     joinedload(Post.author),
-                    joinedload(Post.media_files)
+                    joinedload(Post.media_files),
+                    joinedload(Post.community)
                     )
                 .offset(offset)
                 .limit(limit)
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+        
+    @classmethod
+    async def get_by_user_id(cls, user_id) -> list[Post]:
+        async with async_session() as session:
+            query = (
+                select(cls.model)
+                .options(
+                    joinedload(Post.author),
+                    joinedload(Post.media_files),
+                    joinedload(Post.community)
+                    )
+            .filter_by(user_id=user_id)
             )
             result = await session.execute(query)
             return result.unique().scalars().all()

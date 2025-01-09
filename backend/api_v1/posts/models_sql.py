@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from backend.core.database_sql import Base
+from backend.api_v1.communities.models_sql import Community
 # from core.database_sql import Base
 
 class Media(Base):
@@ -19,7 +20,7 @@ class Post(Base):
 
     author: Mapped['User'] = relationship('User', back_populates='posts')
     media_files: Mapped['Media'] = relationship("Media", back_populates="post", cascade="all, delete-orphan")
-
+    # mb not neccessary
     community_id: Mapped[int] = mapped_column(ForeignKey("communities.id"), nullable=True)
     community: Mapped['Community'] = relationship("Community", back_populates="posts")
     
