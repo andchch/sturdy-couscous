@@ -32,6 +32,20 @@ class CommunityDAO(BaseDAO[Community]):
             )
             result = await session.execute(query)
             return result.unique().scalars().all()
+    
+    @classmethod
+    async def get_all(cls, offset, limit) -> list[Community]:
+        async with async_session() as session:
+            query = (
+                select(cls.model)
+                .options(joinedload(cls.model.members),
+                         joinedload(cls.model.posts)
+                         )
+                .offset(offset)
+                .limit(limit)
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
         
         
 class CommunityMembershipDAO(BaseDAO[CommunityMembership]):
@@ -46,3 +60,13 @@ class CommunityMembershipDAO(BaseDAO[CommunityMembership]):
                 )
             result = await session.execute(query)
             return result.scalar_one_or_none()
+        
+    @classmethod
+    async def get_all_users_communities(cls, user_id):
+        async with async_session() as session:
+            query = select(cls.model).where(
+                cls.model.user_id == user_id
+                )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+        
