@@ -45,7 +45,7 @@ async def get_token(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 #     return RedirectResponse(login_url)
 
 
-@auth_router.get('/auth_steam')
+@auth_router.get('/auth_steam', description='WIP')
 async def auth(request: Request):
     params = dict(request.query_params)
     if 'openid.claimed_id' not in params:

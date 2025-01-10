@@ -118,10 +118,34 @@ class UserFollowDAO(BaseDAO[UserFollow]):
         return await cls.create(follower_id=follower_id, followed_id=followed_id)
     
     @classmethod
+    async def find_follows(cls, user_id: int) -> list[UserFollow]:
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(UserFollow.follower_id==user_id)
+                .options(
+                    joinedload(UserFollow.followed)
+                )
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+        
+    @classmethod
+    async def find_followers(cls, user_id: int) -> list[UserFollow]:
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(UserFollow.followed_id==user_id)
+                .options(
+                    joinedload(UserFollow.follower)
+                )
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+    
+    @classmethod
     async def check_follow(cls, follower_id: int, followed_id: int) -> UserFollow:
         async with async_session() as session:
             follow = await session.execute(
-                select(UserFollow).where(UserFollow.follower_id == follower_id.id,
+                select(UserFollow).where(UserFollow.follower_id == follower_id,
                                         UserFollow.followed_id == followed_id)
                 )
             follow = follow.scalars().first()

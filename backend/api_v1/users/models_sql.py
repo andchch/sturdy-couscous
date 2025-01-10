@@ -34,7 +34,7 @@ class UserFollow(Base):
     follower: Mapped["User"] = relationship("User", foreign_keys=[follower_id], back_populates="following")
     followed: Mapped["User"] = relationship("User", foreign_keys=[followed_id], back_populates="followers")
 
-    __table_args__ = (UniqueConstraint("follower_id", "followed_id", name="uq_user_follow"),)
+    # __table_args__ = (UniqueConstraint("follower_id", "followed_id", name="uq_user_follow"),)
     
 class UserContacts(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)

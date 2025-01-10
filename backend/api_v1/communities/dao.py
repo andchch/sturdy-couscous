@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from backend.api_v1.communities.models_sql import Community, CommunityMembership
+from backend.api_v1.posts.models_sql import Post
 from backend.core.dao import BaseDAO
 
 from backend.core.database_sql import async_session
@@ -20,12 +21,12 @@ class CommunityDAO(BaseDAO[Community]):
             return result.scalar_one_or_none()
         
     @classmethod
-    async def get(cls, community_id, offset, limit) -> list[Community]:
+    async def get(cls, community_id, offset, limit) -> Community:
         async with async_session() as session:
             query = (
                 select(cls.model).where(cls.model.id == community_id)
                 .options(joinedload(cls.model.members),
-                         joinedload(cls.model.posts)
+                         joinedload(cls.model.posts).joinedload(Post.media_files)
                          )
                 .offset(offset)
                 .limit(limit)

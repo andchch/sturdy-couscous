@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
+from backend.api_v1.communities.dao import CommunityDAO, CommunityMembershipDAO
 from backend.core.database_s3 import get_user_avatar, upload_file_to_s3
 
 from .exceptions import user_exists_exception, user_not_exists_exception, self_follow_exception, not_followed_exception
@@ -146,12 +147,31 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
 
 @user_router.get("/{user_id}/followers")
 async def get_followers(user_id: int):
-    followers = UserFollowDAO.find_all(UserFollow.followed_id == user_id)
+    u_followings = await UserFollowDAO.find_followers(user_id=user_id)
+    c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)
     
-    return {"followers": [{"id": f.follower.id, "username": f.follower.username} for f in followers]}
+    ret = {'users': []}
+
+    for follow in u_followings:
+        ret['users'].append({'id': follow.follower.id,
+                            'name': follow.follower.username})
+    
+    return ret
 
 @user_router.get("/{user_id}/following")
-async def get_following(user_id: int):
-    following = UserFollowDAO.find_all(UserFollow.follower_id == user_id)
+async def get_followings(user_id: int):
+    u_followings = await UserFollowDAO.find_follows(user_id=user_id)
+    c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)
     
-    return {"following": [{"id": f.followed.id, "username": f.followed.username} for f in following]}
+    ret = {'users': [],
+           'communities': []}
+
+    for follow in u_followings:
+        ret['users'].append({'id': follow.followed.id,
+                            'name': follow.followed.username})
+    for follow in c_followings:
+        comm = await CommunityDAO.get_by_id(follow.community_id)
+        ret['communities'].append({'id': follow.community_id,
+                            'name': comm.name})
+    
+    return ret

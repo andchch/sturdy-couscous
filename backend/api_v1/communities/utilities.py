@@ -15,8 +15,27 @@ def serialize_community_with_members(community: Community):
             for member in community.members
         ],
     }
+    
+def serialize_post(post):
+        ret = {
+            "id": post.id,
+            "title": post.title,
+            "content": post.content,
+            "created_at": post.created_at,
+            "author": {"id": post.author.id, "username": post.author.username},
+            "community": {"id": post.community.id, "name": post.community.name} if post.community else None
+        }
+        if post.media_files:
+            add = {
+                "media_files": [{"file_url": post.media_files.file_url,
+                                 "file_type": post.media_files.file_type}]
+                }
+            ret.update(add)
+        return ret
 
 def serialize_full_community(community: Community):
+    print(vars(community))
+    print(vars(community.posts))
     ret = {
         "id": community.id,
         "name": community.name,
@@ -31,20 +50,7 @@ def serialize_full_community(community: Community):
         ]
     }
     
-    if community.posts is not None:
-        posts = []
-        for post in community.posts:
-            post_json = {'id': post.id,
-                        'title': post.title,
-                        'content': post.content,
-                        'author_id': post.user_id,
-                        'created_at': post.created_at
-            }
-            if post.media_files is not None:
-                media = {'media_files': [
-                    {'file_url': media.file_url, 'file_type': media.file_type} for media in post.media_files
-                    ]}
-                post_json.update(media)
-            posts.append(post_json)
-        ret.update(posts)
+    add = {'posts': [serialize_post(post) for post in community.posts]}
+    ret.update(add)
+    
     return ret

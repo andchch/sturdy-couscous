@@ -30,7 +30,7 @@ async def get_feed(
     
     for obj in following:
         following_ids.append(obj.followed_id)
-    print(following_ids)
+    # print(following_ids)
 
     # 🔹 2. Получаем ID групп, в которых состоит пользователь
     communities = await CommunityMembershipDAO.get_all_users_communities(current_user.id)
@@ -47,15 +47,21 @@ async def get_feed(
 
     # 🔹 5. Форматируем ответ
     def serialize_post(post):
-        return {
+        ret = {
             "id": post.id,
             "title": post.title,
             "content": post.content,
             "created_at": post.created_at,
             "author": {"id": post.author.id, "username": post.author.username},
-            "media_files": [{"file_url": media.file_url, "file_type": media.file_type} for media in post.media_files or []],
             "community": {"id": post.community.id, "name": post.community.name} if post.community else None
         }
+        if post.media_files:
+            add = {
+                "media_files": [{"file_url": post.media_files.file_url,
+                                 "file_type": post.media_files.file_type}]
+                }
+            ret.update(add)
+        return ret
 
     return {
         "user_posts": [serialize_post(post) for post in user_posts],

@@ -65,4 +65,4 @@ async def list_communities(skip: int = 0, limit: int = 10):
 @community_router.get('/{community_id}')
 async def get_community(community_id: int, skip: int = 0, limit: int = 10):
     community = await CommunityDAO.get(community_id, skip, limit)
-    return serialize_full_community(community)
+    return serialize_full_community(community[0])
