@@ -8,7 +8,7 @@ from backend.core.dao import BaseDAO
 class SteamProfileDAO(BaseDAO[SteamProfile]):
     model = SteamProfile
     
-    @staticmethod
+    @classmethod
     async def get_by_user_id(cls, user_id: int) -> Optional[SteamProfile]:
         async with async_session() as session:
             query = (

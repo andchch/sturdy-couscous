@@ -86,17 +86,22 @@ class UserDAO(BaseDAO[User]):
     @classmethod
     async def update_steam_profile(cls, user_id: int, data: dict) -> Optional[SteamProfile]:
         async with async_session() as session:
-            stmt = select(User).options(joinedload(User.contacts)).where(User.id == user_id)
+            stmt = select(User).options(joinedload(User.steam_profile)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalars().first()
             if not user:
+                print('a')
                 return None
             
             if user.steam_profile:
+                print('b')
                 for key, val in data.items():
                     setattr(user.steam_profile, key, val)
             else:
+                print('c')
                 user.steam_profile = SteamProfile(**data)
+            await session.commit()
+            return user.steam_profile
             
     
     # @classmethod
