@@ -12,7 +12,7 @@ from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User, UserContacts, UserFollow
 from backend.core.database_mongo import MongoController
 from backend.api_v1.games.models_nosql import UserGamesModel
-from backend.api_v1.users.schemas import GetMeResponse, UpdateMeContactsRequest
+from backend.api_v1.users.schemas import ContactsSchema, GetAvatarResponse, GetFollowersResponse, GetFollowingsResponse, GetMeResponse, OnlyStatusResponse, UpdateMeContactsRequest
 from backend.api_v1.users.schemas import (
     CreateUserResponse,
     UpdateMeRequest,
@@ -37,7 +37,7 @@ async def register_user(data: CreateUserRequest):
         email=data['email'],
         hashed_password=get_password_hash(data['password']),
     )
-    response = CreateUserResponse(status='good',
+    response = CreateUserResponse(status=f'User {new_user.username} created successfully',
                                   description='')
     return response
 
@@ -64,17 +64,36 @@ async def create_ugm(hour: int):
 '''
 
 
-@user_router.get('/me')#, response_model=GetMeResponse)
+@user_router.get('/me', response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
-    response = GetMeResponse(
-        username=current_user.username,
-        email=current_user.email,
-        gender=current_user.gender,
-        date_of_birth=current_user.dof
-    )
-    return current_user
+    if current_user.contacts:
+        response = GetMeResponse(
+            id=current_user.id,
+            email=current_user.email,
+            username=current_user.username,
+            registration_time=current_user.created_at,
+            gender=current_user.gender,
+            date_of_birth=current_user.dof,
+            avatar_url=current_user.avatar_url,
+            contacts=ContactsSchema(vk=current_user.contacts.vk,
+                                    telegram=current_user.contacts.telegram,
+                                    steam=current_user.contacts.steam,
+                                    discord=current_user.contacts.discord)
+            )
+    else:
+        response = GetMeResponse(
+            id=current_user.id,
+            email=current_user.email,
+            username=current_user.username,
+            registration_time=current_user.created_at,
+            gender=current_user.gender,
+            dof=current_user.dof,
+            avatar_url=current_user.avatar_url,
+            contacts=None
+            )
+    return response
 
-@user_router.patch('/{user_id}/change-password')
+@user_router.patch('/{user_id}/change-password', response_model=OnlyStatusResponse)
 async def change_password(user_id: int, new_password: str = Form(...)):
     user = await UserDAO.get_by_id(user_id)
     if user is None:
@@ -83,7 +102,7 @@ async def change_password(user_id: int, new_password: str = Form(...)):
         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
         return {'status': 'password has been changed'}
     
-@user_router.patch('/update-me-contacts')
+@user_router.patch('/update-me-contacts', response_model=OnlyStatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateMeContactsRequest):
     await UserDAO.update_contacts(current_user.id, data.model_dump())
@@ -91,7 +110,7 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
     return {'status': 'good'}
     
 
-@user_router.patch('/update-me')
+@user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     gender: str = Form(None), purpose: str = Form(None),
                     self_assessment_lvl: str = Form(None),
@@ -112,7 +131,7 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                             hours_per_week=hours_per_week)
     return {'status': 'good'}
 
-@user_router.get('/get-avatar')
+@user_router.get('/get-avatar', response_model=GetAvatarResponse)
 async def get_avatar(user_id: int):
     user = await UserDAO.get_by_id(user_id)
     if user is None:
@@ -126,16 +145,16 @@ async def get_avatar(user_id: int):
         else:
             return {'avatar_url': 'no avatar'}
 
-@user_router.post("/{user_id}/follow")
+@user_router.post("/{user_id}/follow", response_model=OnlyStatusResponse)
 async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
     if current_user.id == user_id:
         raise self_follow_exception
 
     await UserFollowDAO.follow(current_user.id, user_id)
     
-    return {"message": "Подписка успешна"}
+    return {"status": "Подписка успешна"}
 
-@user_router.delete("/{user_id}/unfollow")
+@user_router.delete("/{user_id}/unfollow", response_model=OnlyStatusResponse)
 async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
     is_followed = await UserFollow.check_follow(current_user.id, user_id)
     
@@ -143,22 +162,21 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
         raise not_followed_exception
     else:
         UserFollowDAO.delete(is_followed.id)
-        return {"message": "Вы отписались"}
+        return {"status": "Вы отписались"}
 
-@user_router.get("/{user_id}/followers")
+@user_router.get("/{user_id}/followers", response_model=GetFollowersResponse)
 async def get_followers(user_id: int):
     u_followings = await UserFollowDAO.find_followers(user_id=user_id)
-    c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)
     
     ret = {'users': []}
 
     for follow in u_followings:
         ret['users'].append({'id': follow.follower.id,
-                            'name': follow.follower.username})
+                             'name': follow.follower.username})
     
     return ret
 
-@user_router.get("/{user_id}/following")
+@user_router.get("/{user_id}/following", response_model=GetFollowingsResponse)
 async def get_followings(user_id: int):
     u_followings = await UserFollowDAO.find_follows(user_id=user_id)
     c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)
@@ -168,10 +186,10 @@ async def get_followings(user_id: int):
 
     for follow in u_followings:
         ret['users'].append({'id': follow.followed.id,
-                            'name': follow.followed.username})
+                             'username': follow.followed.username})
     for follow in c_followings:
         comm = await CommunityDAO.get_by_id(follow.community_id)
         ret['communities'].append({'id': follow.community_id,
-                            'name': comm.name})
+                                   'name': comm.name})
     
     return ret

@@ -2,8 +2,23 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class ContactsSchema(BaseModel):
+    vk: str | None
+    telegram: str | None
+    steam: str | None
+    discord: str | None
+    
+
 class GetMeResponse(BaseModel):
-    pass
+    id: int
+    email: str
+    username: str
+    registration_time: datetime
+    gender: str | None
+    dof: datetime | None
+    avatar_url: str | None
+    contacts: ContactsSchema | None
+    
     
 class CreateUserResponse(BaseModel):
     status: str
@@ -43,4 +58,25 @@ class UpdateMeContactsRequest(BaseModel):
     telegram: str
     steam: str
     discord: str
+    
+class OnlyStatusResponse(BaseModel):
+    status: str
+    
+class GetAvatarResponse(BaseModel):
+    avatar_url: str
+    
+class UsersShort(BaseModel):
+    id: int
+    username: str
+    
+class CommunityShort(BaseModel):
+    id: int
+    name: str
+    
+class GetFollowersResponse(BaseModel):
+    users: list[UsersShort]
+
+class GetFollowingsResponse(BaseModel):
+    users: list[UsersShort]
+    communities: list[CommunityShort]
     

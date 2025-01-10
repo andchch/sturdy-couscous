@@ -21,18 +21,18 @@ class CommunityDAO(BaseDAO[Community]):
             return result.scalar_one_or_none()
         
     @classmethod
-    async def get(cls, community_id, offset, limit) -> Community:
+    async def get(cls, community_id) -> Community:
         async with async_session() as session:
             query = (
                 select(cls.model).where(cls.model.id == community_id)
                 .options(joinedload(cls.model.members),
-                         joinedload(cls.model.posts).joinedload(Post.media_files)
+                         joinedload(cls.model.posts).joinedload(Post.media_files),
+                         joinedload(cls.model.posts).joinedload(Post.author)
                          )
-                .offset(offset)
-                .limit(limit)
             )
             result = await session.execute(query)
-            return result.unique().scalars().all()
+            return result.unique().scalar_one_or_none()
+            # return result.unique().scalars().all()
     
     @classmethod
     async def get_all(cls, offset, limit) -> list[Community]:
