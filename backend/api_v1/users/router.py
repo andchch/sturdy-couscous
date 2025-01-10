@@ -6,17 +6,12 @@ from backend.core.database_s3 import get_user_avatar, upload_file_to_s3
 
 from .exceptions import user_exists_exception, user_not_exists_exception, self_follow_exception, not_followed_exception
 from backend.api_v1.auth.auth import get_password_hash
-from backend.api_v1.games.models_nosql import MinecraftModel
-from backend.api_v1.users.dao import UserDAO, UserFollowDAO, UserInteractionDAO
+from backend.api_v1.users.dao import UserDAO, UserFollowDAO
 from backend.api_v1.users.dependencies import get_current_user
-from backend.api_v1.users.models_sql import User, UserContacts, UserFollow
-from backend.core.database_mongo import MongoController
-from backend.api_v1.games.models_nosql import UserGamesModel
+from backend.api_v1.users.models_sql import User, UserFollow
 from backend.api_v1.users.schemas import ContactsSchema, GetAvatarResponse, GetFollowersResponse, GetFollowingsResponse, GetMeResponse, OnlyStatusResponse, UpdateMeContactsRequest
 from backend.api_v1.users.schemas import (
     CreateUserResponse,
-    UpdateMeRequest,
-    UpdateCredentialsRequest,
     CreateUserRequest,
 )
 
@@ -41,7 +36,7 @@ async def register_user(data: CreateUserRequest):
                                   description='')
     return response
 
-'''
+"""
 TODO:check
 @user_router.post('/create_user_interaction')
 async def create_user_interaction(u_id1: int, u_id2: int, game: str, u_rating1: str, u_rating2: str):
@@ -61,7 +56,7 @@ async def create_ugm(hour: int):
     mongo = MongoController()
     print(ugm.model_dump())
     await mongo.add_user_games(ugm)
-'''
+"""
 
 
 @user_router.get('/me', response_model=GetMeResponse)
@@ -73,7 +68,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
             username=current_user.username,
             registration_time=current_user.created_at,
             gender=current_user.gender,
-            date_of_birth=current_user.dof,
+            dof=current_user.dof,
             avatar_url=current_user.avatar_url,
             contacts=ContactsSchema(vk=current_user.contacts.vk,
                                     telegram=current_user.contacts.telegram,
@@ -109,7 +104,7 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
     
     return {'status': 'good'}
     
-
+#TODO: update
 @user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     gender: str = Form(None), purpose: str = Form(None),
@@ -145,16 +140,16 @@ async def get_avatar(user_id: int):
         else:
             return {'avatar_url': 'no avatar'}
 
-@user_router.post("/{user_id}/follow", response_model=OnlyStatusResponse)
+@user_router.post('/{user_id}/follow', response_model=OnlyStatusResponse)
 async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
     if current_user.id == user_id:
         raise self_follow_exception
 
     await UserFollowDAO.follow(current_user.id, user_id)
     
-    return {"status": "Подписка успешна"}
+    return {'status': 'Подписка успешна'}
 
-@user_router.delete("/{user_id}/unfollow", response_model=OnlyStatusResponse)
+@user_router.delete('/{user_id}/unfollow', response_model=OnlyStatusResponse)
 async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
     is_followed = await UserFollow.check_follow(current_user.id, user_id)
     
@@ -162,9 +157,9 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
         raise not_followed_exception
     else:
         UserFollowDAO.delete(is_followed.id)
-        return {"status": "Вы отписались"}
+        return {'status': 'Вы отписались'}
 
-@user_router.get("/{user_id}/followers", response_model=GetFollowersResponse)
+@user_router.get('/{user_id}/followers', response_model=GetFollowersResponse)
 async def get_followers(user_id: int):
     u_followings = await UserFollowDAO.find_followers(user_id=user_id)
     
@@ -176,7 +171,7 @@ async def get_followers(user_id: int):
     
     return ret
 
-@user_router.get("/{user_id}/following", response_model=GetFollowingsResponse)
+@user_router.get('/{user_id}/following', response_model=GetFollowingsResponse)
 async def get_followings(user_id: int):
     u_followings = await UserFollowDAO.find_follows(user_id=user_id)
     c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)

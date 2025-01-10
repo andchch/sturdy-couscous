@@ -9,6 +9,7 @@ from backend.api_v1.recommendation_system.router import rs_router
 from backend.api_v1.posts.router import posts_router
 from backend.api_v1.communities.router import community_router
 from backend.api_v1.feed.router import feed_router
+from backend.api_v1.external_integration.router import ext_integration_router
 
 
 # TODO: Set up CORS
@@ -47,3 +48,4 @@ app.include_router(rs_router)
 app.include_router(posts_router)
 app.include_router(community_router)
 app.include_router(feed_router)
+app.include_router(ext_integration_router)

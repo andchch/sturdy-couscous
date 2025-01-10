@@ -1,7 +1,8 @@
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
+from backend.api_v1.external_integration.models_sql import SteamProfile
 from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
 from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInteraction
@@ -52,12 +53,24 @@ class UserDAO(BaseDAO[User]):
             return result.scalar_one_or_none()
         
     @classmethod
+    async def get_by_id(cls, model_id):
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(cls.model.id == model_id)
+                .options(
+                    joinedload(User.integro)
+                )
+            )
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+
+        
+    @classmethod
     async def update_contacts(cls, user_id: int, data: dict) -> Optional[UserContacts]:
         async with async_session() as session:
             stmt = select(User).options(joinedload(User.contacts)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalars().first()
-            print(vars(user))
             if not user:
                 return None
 
@@ -69,6 +82,40 @@ class UserDAO(BaseDAO[User]):
 
             await session.commit()
             return user.contacts
+        
+    @classmethod
+    async def update_steam_profile(cls, user_id: int, data: dict) -> Optional[SteamProfile]:
+        async with async_session() as session:
+            stmt = select(User).options(joinedload(User.contacts)).where(User.id == user_id)
+            result = await session.execute(stmt)
+            user = result.scalars().first()
+            if not user:
+                return None
+            
+            if user.steam_profile:
+                for key, val in data.items():
+                    setattr(user.steam_profile, key, val)
+            else:
+                user.steam_profile = SteamProfile(**data)
+            
+    
+    # @classmethod
+    # async def update_integro(cls, user_id: int, data: dict) -> Optional[UserIntegro]:
+    #     async with async_session() as session:
+    #         stmt = select(User).options(joinedload(User.integro)).where(User.id == user_id)
+    #         result = await session.execute(stmt)
+    #         user = result.scalars().first()
+    #         if not user:
+    #             return None
+
+    #         if user.integro:
+    #             for key, val in data.items():
+    #                 setattr(user.contacts, key, val)
+    #         else:
+    #             user.integro = UserIntegro(**data)
+
+    #         await session.commit()
+    #         return user.integro
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction
@@ -145,7 +192,7 @@ class UserFollowDAO(BaseDAO[UserFollow]):
     async def check_follow(cls, follower_id: int, followed_id: int) -> UserFollow:
         async with async_session() as session:
             follow = await session.execute(
-                select(UserFollow).where(UserFollow.follower_id == follower_id,
+                select(cls.model).where(UserFollow.follower_id == follower_id,
                                         UserFollow.followed_id == followed_id)
                 )
             follow = follow.scalars().first()
@@ -155,3 +202,15 @@ class UserFollowDAO(BaseDAO[UserFollow]):
             else:
                 return follow
             
+# class UserIntegroTableDAO(BaseDAO[UserIntegro]):
+#     model = UserIntegro
+    
+#     @classmethod
+#     async def get_integrations(cls, user_id: int) -> Optional[UserIntegro]:
+#         async with async_session() as session:
+#             query = (
+#                 select(cls.model).where(UserIntegro.user_id == user_id)
+#             )
+#             result = await session.execute(query)
+#             return result.scalars().one_or_none()
+        

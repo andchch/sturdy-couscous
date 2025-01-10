@@ -23,3 +23,8 @@ role_forbidden = HTTPException(
     status_code=status.HTTP_403_FORBIDDEN,
     detail='You do not have the necessary permissions',
 )
+
+auth_failed = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Authorization failed'
+)

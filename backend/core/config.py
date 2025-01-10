@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     
     STEAM_API_KEY: str
     
+    REDIS_URI: str
+    
     model_config = SettingsConfigDict(
         env_file=os.path.join(
             os.path.dirname(os.path.abspath(__file__)), '..', '..' ,'.env'
@@ -65,3 +67,6 @@ def get_steam_api_key():
 def get_s3_creds():
     return [settings.S3_TENANT_ID, settings.S3_KEY_ID,
             settings.S3_KEY_SECRET, settings.S3_ENDPOINT]
+
+def get_redis_db():
+    return settings.REDIS_URI
