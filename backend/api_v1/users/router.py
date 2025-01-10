@@ -9,7 +9,7 @@ from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.users.dao import UserDAO, UserFollowDAO
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User, UserFollow
-from backend.api_v1.users.schemas import ContactsSchema, GetAvatarResponse, GetFollowersResponse, GetFollowingsResponse, GetMeResponse, OnlyStatusResponse, UpdateMeContactsRequest
+from backend.api_v1.users.schemas import ContactsSchema, GetAvatarResponse, GetFollowersResponse, GetFollowingsResponse, GetMeResponse, OnlyStatusResponse, UpdateCurrentUserRequest, UpdateMeContactsRequest
 from backend.api_v1.users.schemas import (
     CreateUserResponse,
     CreateUserRequest,
@@ -104,26 +104,15 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
     
     return {'status': 'good'}
     
-#TODO: update
 @user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
-                    gender: str = Form(None), purpose: str = Form(None),
-                    self_assessment_lvl: str = Form(None),
-                    preferred_communication: str = Form(None),
-                    hours_per_week: int = Form(None),
+                    data: UpdateCurrentUserRequest,
                     new_avatar: UploadFile | None = File(None)):
+    await UserDAO.update_user_info(current_user.id, **data)
     if new_avatar is not None:
         file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
-        await UserDAO.update(current_user.id, gender=gender, purpose=purpose,
-                            self_assessment_lvl=self_assessment_lvl,
-                            preferred_communication=preferred_communication,
-                            hours_per_week=hours_per_week,
-                            avatar_url=file_url)
-    else:
-        await UserDAO.update(current_user.id, gender=gender, purpose=purpose,
-                            self_assessment_lvl=self_assessment_lvl,
-                            preferred_communication=preferred_communication,
-                            hours_per_week=hours_per_week)
+        await UserDAO.update(current_user.id, avatar_url=file_url)
+    
     return {'status': 'good'}
 
 @user_router.get('/get-avatar', response_model=GetAvatarResponse)

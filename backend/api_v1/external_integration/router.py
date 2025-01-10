@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from backend.api_v1.external_integration.dao import SteamProfileDAO
 from backend.api_v1.external_integration.dependencies import SteamService, get_steam_service
 from backend.api_v1.external_integration.schemas import GetFriendsResponse, GetGamesResponse
-from backend.api_v1.external_integration.utilities import fetch_achievements, fetch_friends, fetch_owned_games, fetch_steam_profile
+from backend.api_v1.external_integration.utilities import fetch_friends, fetch_owned_games, fetch_steam_profile
 from backend.api_v1.users.dao import UserDAO
 from backend.api_v1.external_integration.exceptions import privacy_error
 from backend.api_v1.users.dependencies import get_current_user
@@ -69,18 +69,6 @@ async def fetch_users_games(user_id: int, steam_service: Annotated[SteamService,
     new_data = fetch_owned_games(steam_profile.steam_id)
     await steam_service.update_games(steam_profile.steam_id, new_data)
     return await steam_service.get_games(steam_profile.steam_id)
-
-# @ext_integration_router.get('/steam/{user_id}/achievements')
-# async def get_steam_achievements(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):
-#     steam_profile = await SteamProfileDAO.get_by_user_id(user_id)
-#     return await steam_service.get_achievements(steam_profile.steam_id)
-
-# #TODO: for many games
-# @ext_integration_router.put('/steam/{user_id}/achievements')
-# async def fetch_steam_achievements(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):
-#     steam_profile = await SteamProfileDAO.get_by_user_id(user_id)
-#     new_data = fetch_achievements(steam_profile.steam_id)
-#     return ...
     
 @ext_integration_router.get('/steam/{user_id}/friends', response_model=GetFriendsResponse)
 async def get_steam_friends(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):

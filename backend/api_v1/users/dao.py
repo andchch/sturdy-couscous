@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 from backend.api_v1.external_integration.models_sql import SteamProfile
 from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInfo, UserInteraction
 from backend.core.database_sql import async_session
 
 class AchievementDAO(BaseDAO[Achievement]):
@@ -68,7 +68,7 @@ class UserDAO(BaseDAO[User]):
     @classmethod
     async def update_contacts(cls, user_id: int, data: dict) -> Optional[UserContacts]:
         async with async_session() as session:
-            stmt = select(User).options(joinedload(User.contacts)).where(User.id == user_id)
+            stmt = select(cls.model).options(joinedload(User.contacts)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalars().first()
             if not user:
@@ -86,7 +86,7 @@ class UserDAO(BaseDAO[User]):
     @classmethod
     async def update_steam_profile(cls, user_id: int, data: dict) -> Optional[SteamProfile]:
         async with async_session() as session:
-            stmt = select(User).options(joinedload(User.steam_profile)).where(User.id == user_id)
+            stmt = select(cls.model).options(joinedload(User.steam_profile)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalars().first()
             if not user:
@@ -102,25 +102,23 @@ class UserDAO(BaseDAO[User]):
                 user.steam_profile = SteamProfile(**data)
             await session.commit()
             return user.steam_profile
+        
+    @classmethod
+    async def update_user_info(cls, user_id: int, data: dict):
+        async with async_session() as session:
+            stmt = select(cls.model).where(User.id == user_id)
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
+            if not user:
+                return None
             
-    
-    # @classmethod
-    # async def update_integro(cls, user_id: int, data: dict) -> Optional[UserIntegro]:
-    #     async with async_session() as session:
-    #         stmt = select(User).options(joinedload(User.integro)).where(User.id == user_id)
-    #         result = await session.execute(stmt)
-    #         user = result.scalars().first()
-    #         if not user:
-    #             return None
-
-    #         if user.integro:
-    #             for key, val in data.items():
-    #                 setattr(user.contacts, key, val)
-    #         else:
-    #             user.integro = UserIntegro(**data)
-
-    #         await session.commit()
-    #         return user.integro
+            if user.info:
+                for key, val in data.items():
+                    setattr(user.info, key, val)
+            else:
+                user.info = UserInfo(**data)
+            await session.commit()
+            return user.info
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction

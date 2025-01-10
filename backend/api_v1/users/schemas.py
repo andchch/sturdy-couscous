@@ -24,11 +24,12 @@ class CreateUserResponse(BaseModel):
     status: str
     description: str
     
-# class UpdateCurrentUserRequest(BaseModel):
-#     purpose: str
-#     self_assessment_lvl: str
-#     preferred_communication: str
-#     hours_per_week: int
+class UpdateCurrentUserRequest(BaseModel):
+    gender: str
+    purpose: str
+    self_assessment_lvl: str
+    preferred_communication: str
+    hours_per_week: int
 
 
 class CreateUserRequest(BaseModel):
