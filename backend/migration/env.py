@@ -33,7 +33,6 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from backend.core.database_sql import Base  # noqa: E402
 from backend.api_v1.users.models_sql import *  # noqa: E402, F401, F403
-from backend.api_v1.games.models_sql import *  # noqa: E402, F401, F403
 from backend.api_v1.posts.models_sql import *  # noqa: E402, F401, F403
 from backend.api_v1.communities.models_sql import *  # noqa: E402, F401, F403
 from backend.api_v1.external_integration.models_sql import * # noqa: E402, F401, F403
