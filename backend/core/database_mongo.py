@@ -1,7 +1,9 @@
 from datetime import datetime
+
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from .config import get_mongo_uri, get_mongo_db
+from .config import get_mongo_db, get_mongo_uri
+
 
 class MongoController:
     def __init__(self):

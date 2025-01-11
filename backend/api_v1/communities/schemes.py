@@ -29,7 +29,14 @@ class CommunityListResponse(BaseModel):
     creator_id: int
     members: list[Member] | None
     
-    
 class GetCommunityResponse(CommunityListResponse):
+    posts: list[Post]
+    
+class GetCommunity(BaseModel):
+    id: int
+    name: str
+    description: str
+    creator_id: int
+    members: list[Member] | None
     posts: list[Post]
     

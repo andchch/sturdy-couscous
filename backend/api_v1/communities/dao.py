@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import joinedload
 
 from backend.api_v1.communities.models_sql import Community, CommunityMembership
@@ -70,4 +70,15 @@ class CommunityMembershipDAO(BaseDAO[CommunityMembership]):
                 )
             result = await session.execute(query)
             return result.unique().scalars().all()
+        
+    @classmethod
+    async def leave(cls, user_id: int, community_id: int):
+        async with async_session() as session:
+            await session.execute(
+                delete(cls.model).where(
+                    cls.model.user_id == user_id,
+                    cls.model.community_id == community_id
+                    )
+                )
+            await session.commit()
         

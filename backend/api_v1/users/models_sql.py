@@ -60,13 +60,6 @@ class UserWeights(Base):
     # --- Weights ---
     
     user: Mapped['User'] = relationship('User', back_populates='weights')
-
-# class UserIntegro(Base):
-#     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
-    
-#     steam_id: Mapped[str | None]
-    
-#     user: Mapped['User'] = relationship('User', back_populates='integro')
     
 class UserInfo(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
@@ -104,10 +97,6 @@ class User(Base):
     weights: Mapped['UserWeights'] = relationship(
         'UserWeights', back_populates='user', uselist=False, cascade='all, delete-orphan'
     )
-
-    # integro: Mapped['UserIntegro'] = relationship(
-    #     'UserIntegro', back_populates='user', uselist=False, cascade='all, delete-orphan'
-    # )
     
     info: Mapped['UserInfo'] = relationship(
         'UserInfo', back_populates='user', uselist=False, cascade='all, delete-orphan'
@@ -126,7 +115,7 @@ class User(Base):
     
     interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_1',
                                                                             foreign_keys='UserInteraction.user_1_id')
-    interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
+    interactions_as_user_2: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
                                                                             foreign_keys='UserInteraction.user_2_id')
     
     posts: Mapped[list['Post']] = relationship(

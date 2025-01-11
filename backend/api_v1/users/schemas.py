@@ -8,6 +8,13 @@ class ContactsSchema(BaseModel):
     steam: str | None
     discord: str | None
     
+class ShortUser(BaseModel):
+    id: int
+    username: str
+    avatar_url: str
+    
+class GetAllUsersResponse(BaseModel):
+    users: list[ShortUser]
 
 class GetMeResponse(BaseModel):
     id: int
@@ -19,6 +26,12 @@ class GetMeResponse(BaseModel):
     avatar_url: str | None
     contacts: ContactsSchema | None
     
+class GetUserResponse(BaseModel):
+    id: int
+    username: str
+    gender: str | None
+    dof: datetime | None
+    contacts: ContactsSchema | None
     
 class CreateUserResponse(BaseModel):
     status: str
@@ -80,4 +93,9 @@ class GetFollowersResponse(BaseModel):
 class GetFollowingsResponse(BaseModel):
     users: list[UsersShort]
     communities: list[CommunityShort]
+    
+class UpdateCreditsRequest(BaseModel):
+    new_username: str | None
+    new_password: str | None
+    new_dob: datetime | None
     

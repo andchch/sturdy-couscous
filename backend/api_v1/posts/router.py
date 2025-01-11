@@ -1,12 +1,11 @@
-from typing import Optional
-from backend.api_v1.posts.models_sql import Media
-from backend.api_v1.posts.schemas import OnlyStatusResponse
+from typing import Annotated, Optional
+from backend.api_v1.posts.schemas import OnlyStatusResponse, GetPostsResponse
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.posts.dao import MediaDAO, PostDAO
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from backend.api_v1.posts.models_nosql import PostCreate, GetPostsResponse
 from backend.core.database_s3 import upload_file_to_s3
-from backend.core.utilities import serialize_post
+from backend.api_v1.posts.utilities import serialize_post
+from backend.redis.cache import RedisController, get_redis_controller
 
 posts_router = APIRouter(prefix='/posts', tags=['Posts management'])
 S3_MEDIA_BUCKET='bucket-913415'
@@ -30,16 +29,22 @@ async def create_new_post(title: str = Form(...),
 
 
 @posts_router.get('/get-all-posts', response_model=GetPostsResponse)
-async def read_posts(skip: int = 0, limit: int = 10):
+async def read_posts(rediska: Annotated[RedisController, Depends(get_redis_controller)],
+                     skip: int = 0, limit: int = 10):
     posts = await PostDAO.get(skip, limit)
     return {
-        'posts': [serialize_post(post) for post in posts]
+        'posts': [await serialize_post(post, rediska) for post in posts]
     }
 
 @posts_router.get('/{user_id}/get-posts', response_model=GetPostsResponse)
-async def get_users_posts(user_id: int):
+async def get_users_posts(user_id: int,
+                          rediska: Annotated[RedisController, Depends(get_redis_controller)]):
     posts = await PostDAO.get_by_user_id(user_id)
     
     return {
-        'posts': [serialize_post(post) for post in posts]
+        'posts': [await serialize_post(post, rediska) for post in posts]
     }
+    
+@posts_router.delete('/delete')
+async def remove_post(post_id: int):
+    await PostDAO.delete(post_id)

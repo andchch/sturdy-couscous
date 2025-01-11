@@ -1,25 +1,11 @@
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import joinedload
 
 from backend.api_v1.external_integration.models_sql import SteamProfile
-from backend.api_v1.games.models_sql import Achievement
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInfo, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInfo, UserInteraction, UserWeights
 from backend.core.database_sql import async_session
-
-class AchievementDAO(BaseDAO[Achievement]):
-    model = Achievement
-    
-    @classmethod
-    async def get_by_app_steam_id(cls, appid: str, steamid: str, achievement: str) -> Optional[Achievement]:
-        async with async_session() as session:
-            query = select(cls.model).where(cls.model.appid == appid,
-                                            cls.model.steamid == steamid,
-                                            cls.model.achievement == achievement)
-            result = await session.execute(query)
-            return result.scalar_one_or_none()
-        
 
 class UserDAO(BaseDAO[User]):
     model = User
@@ -57,9 +43,7 @@ class UserDAO(BaseDAO[User]):
         async with async_session() as session:
             query = (
                 select(cls.model).where(cls.model.id == model_id)
-                .options(
-                    joinedload(User.integro)
-                )
+                .options(joinedload(cls.model.contacts))
             )
             result = await session.execute(query)
             return result.scalar_one_or_none()
@@ -90,15 +74,12 @@ class UserDAO(BaseDAO[User]):
             result = await session.execute(stmt)
             user = result.scalars().first()
             if not user:
-                print('a')
                 return None
             
             if user.steam_profile:
-                print('b')
                 for key, val in data.items():
                     setattr(user.steam_profile, key, val)
             else:
-                print('c')
                 user.steam_profile = SteamProfile(**data)
             await session.commit()
             return user.steam_profile
@@ -119,6 +100,23 @@ class UserDAO(BaseDAO[User]):
                 user.info = UserInfo(**data)
             await session.commit()
             return user.info
+     
+    @classmethod   
+    async def update_weights(cls, user_id: int, data: dict):
+        async with async_session() as session:
+            stmt = select(cls.model).where(User.id == user_id)
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
+            if not user:
+                return None
+            
+            if user.weights:
+                for key, val in data.items():
+                    setattr(user.weights, key, val)
+            else:
+                user.weights = UserWeights(**data)
+            await session.commit()
+            return user.weights
 
 class UserInteractionDAO(BaseDAO[UserInteraction]):
     model = UserInteraction
@@ -205,15 +203,14 @@ class UserFollowDAO(BaseDAO[UserFollow]):
             else:
                 return follow
             
-# class UserIntegroTableDAO(BaseDAO[UserIntegro]):
-#     model = UserIntegro
-    
-#     @classmethod
-#     async def get_integrations(cls, user_id: int) -> Optional[UserIntegro]:
-#         async with async_session() as session:
-#             query = (
-#                 select(cls.model).where(UserIntegro.user_id == user_id)
-#             )
-#             result = await session.execute(query)
-#             return result.scalars().one_or_none()
-        
+    @classmethod
+    async def unfollow(cls, follower_id: int, followed_id: int):
+        async with async_session() as session:
+            await session.execute(
+                delete(cls.model).where(
+                    cls.model.follower_id == follower_id,
+                    cls.model.followed_id == followed_id
+                    )
+                )
+            await session.commit()
+            

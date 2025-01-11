@@ -18,3 +18,11 @@ self_follow_exception = HTTPException(
 not_followed_exception = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST, 
      detail='Not followed')
+
+already_followed_exception = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+     detail='Already followed')
+
+busy_username_exception = HTTPException(
+    status_code=status.HTTP_409_CONFLICT,
+     detail='Username is taken')

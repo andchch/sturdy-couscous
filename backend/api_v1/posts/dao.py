@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Optional
 from sqlalchemy import select, union_all
 from sqlalchemy.orm import joinedload
 from backend.api_v1.posts.models_sql import Media, Post

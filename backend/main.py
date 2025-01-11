@@ -44,8 +44,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
-app.include_router(rs_router)
 app.include_router(posts_router)
 app.include_router(community_router)
 app.include_router(feed_router)
 app.include_router(ext_integration_router)
+app.include_router(rs_router)

@@ -2,7 +2,6 @@ import json
 from backend.api_v1.external_integration.dao import SteamProfileDAO
 from backend.api_v1.external_integration.utilities import DateTimeEncoder
 from backend.api_v1.external_integration.exceptions import privacy_error
-from backend.core.config import get_redis_db
 from backend.core.database_mongo import MongoController
 from backend.redis.cache import RedisController
 
@@ -94,6 +93,6 @@ class SteamService:
         
 def get_steam_service() -> SteamService:
     mongo = MongoController()
-    redis = RedisController()#get_redis_db())
+    redis = RedisController()
     service = SteamService(mongo, redis)
     return service

@@ -1,20 +1,38 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, File, Form, UploadFile
 
-from backend.api_v1.communities.dao import CommunityDAO, CommunityMembershipDAO
-from backend.core.database_s3 import get_user_avatar, upload_file_to_s3
+from fastapi import APIRouter, Depends, File, UploadFile
 
-from .exceptions import user_exists_exception, user_not_exists_exception, self_follow_exception, not_followed_exception
 from backend.api_v1.auth.auth import get_password_hash
+from backend.api_v1.communities.dao import CommunityDAO, CommunityMembershipDAO
 from backend.api_v1.users.dao import UserDAO, UserFollowDAO
 from backend.api_v1.users.dependencies import get_current_user
-from backend.api_v1.users.models_sql import User, UserFollow
-from backend.api_v1.users.schemas import ContactsSchema, GetAvatarResponse, GetFollowersResponse, GetFollowingsResponse, GetMeResponse, OnlyStatusResponse, UpdateCurrentUserRequest, UpdateMeContactsRequest
+from backend.api_v1.users.models_sql import User
 from backend.api_v1.users.schemas import (
-    CreateUserResponse,
+    ContactsSchema,
     CreateUserRequest,
+    CreateUserResponse,
+    GetAllUsersResponse,
+    GetAvatarResponse,
+    GetFollowersResponse,
+    GetFollowingsResponse,
+    GetMeResponse,
+    GetUserResponse,
+    OnlyStatusResponse,
+    UpdateCreditsRequest,
+    UpdateCurrentUserRequest,
+    UpdateMeContactsRequest,
 )
+from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
+from backend.redis.cache import RedisController, get_redis_controller
 
+from .exceptions import (
+    already_followed_exception,
+    busy_username_exception,
+    not_followed_exception,
+    self_follow_exception,
+    user_exists_exception,
+    user_not_exists_exception,
+)
 
 user_router = APIRouter(prefix='/user', tags=['Users management'])
 S3_MEDIA_BUCKET='user.media'
@@ -88,14 +106,78 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
             )
     return response
 
-@user_router.patch('/{user_id}/change-password', response_model=OnlyStatusResponse)
-async def change_password(user_id: int, new_password: str = Form(...)):
+@user_router.get('/{user_id}', response_model=GetUserResponse)
+async def get_user(user_id: int):
     user = await UserDAO.get_by_id(user_id)
     if user is None:
         raise user_not_exists_exception
+    if user.contacts is None:
+        response = GetUserResponse(
+            id=user.id,
+            username=user.username,
+            gender=user.gender,
+            dof=user.dof,
+            contacts=None
+            )
+        return response
+    if hasattr(user, 'contacts'):
+        response = GetUserResponse(
+            id=user.id,
+            username=user.username,
+            gender=user.gender,
+            dof=user.dof,
+            contacts=ContactsSchema(vk=user.contacts.vk,
+                                    telegram=user.contacts.telegram,
+                                    steam=user.contacts.steam,
+                                    discord=user.contacts.discord)
+            )
     else:
-        await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
-        return {'status': 'password has been changed'}
+        response = GetUserResponse(
+            id=user.id,
+            username=user.username,
+            gender=user.gender,
+            dof=user.dof,
+            contacts=None
+            )
+    return response
+
+@user_router.patch('/change-credits')
+async def change_users_creds(current_user: Annotated[User, Depends(get_current_user)],
+                             data: UpdateCreditsRequest):
+    new_credits = {}
+    if data.new_username:
+        user = await UserDAO.get_by_username(data.new_username)
+        if user:
+            raise busy_username_exception
+        new_credits['username'] = data.new_username
+    if data.new_password:
+        new_credits['hashed_password'] = get_password_hash(data.new_password)
+    if data.new_dob:
+        new_credits['dof'] = data.new_dob
+    
+    await UserDAO.update(current_user.id, **new_credits)
+    return {'status': 'успешно изменено'}
+    
+@user_router.get('/', response_model=GetAllUsersResponse)
+async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
+    ret = {'users': []}
+    users = await UserDAO.find_all()
+    for user in users:
+        add = {'id': user.id,
+               'username': user.username,
+               'avatar_url': await get_cached_avatar_url(user.id, rediska)}
+        ret['users'].append(add)
+    
+    return ret
+
+# @user_router.patch('/{user_id}/change-password', response_model=OnlyStatusResponse)
+# async def change_password(user_id: int, new_password: str = Form(...)):
+#     user = await UserDAO.get_by_id(user_id)
+#     if user is None:
+#         raise user_not_exists_exception
+#     else:
+#         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
+#         return {'status': 'password has been changed'}
     
 @user_router.patch('/update-me-contacts', response_model=OnlyStatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
@@ -106,46 +188,55 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
     
 @user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
-                    data: UpdateCurrentUserRequest,
-                    new_avatar: UploadFile | None = File(None)):
+                    data: UpdateCurrentUserRequest):
     await UserDAO.update_user_info(current_user.id, **data)
+    return {'status': 'good'}
+
+@user_router.patch('/update-me-avatar', response_model=OnlyStatusResponse)
+async def update_avatar(current_user: Annotated[User, Depends(get_current_user)],
+                        new_avatar: UploadFile | None = File(None)):
     if new_avatar is not None:
         file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
         await UserDAO.update(current_user.id, avatar_url=file_url)
     
     return {'status': 'good'}
 
-@user_router.get('/get-avatar', response_model=GetAvatarResponse)
-async def get_avatar(user_id: int):
-    user = await UserDAO.get_by_id(user_id)
+@user_router.get('/{user_id}/get-avatar', response_model=GetAvatarResponse)
+async def get_avatar(user_id: int, rediska: Annotated[RedisController, Depends(get_redis_controller)]):
+    user = await UserDAO.get_by_id(int(user_id))
     if user is None:
         raise user_not_exists_exception
     else:
         if user.avatar_url is not None:
-            file_name = user.avatar_url.split('/')[-1]
-            print(file_name)
-            avatar_url = get_user_avatar(file_name)
+            avatar_url = await get_cached_avatar_url(user.id, rediska, url=user.avatar_url)
             return {'avatar_url': f'{avatar_url}'}
         else:
             return {'avatar_url': 'no avatar'}
 
 @user_router.post('/{user_id}/follow', response_model=OnlyStatusResponse)
 async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
+    is_followed = await UserFollowDAO.check_follow(current_user.id, user_id)
     if current_user.id == user_id:
         raise self_follow_exception
+    if is_followed:
+        raise already_followed_exception
 
+    user = await UserDAO.get_by_id(user_id)
+    if user is None:
+        raise user_not_exists_exception
+    
     await UserFollowDAO.follow(current_user.id, user_id)
     
     return {'status': 'Подписка успешна'}
 
 @user_router.delete('/{user_id}/unfollow', response_model=OnlyStatusResponse)
 async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
-    is_followed = await UserFollow.check_follow(current_user.id, user_id)
+    is_followed = await UserFollowDAO.check_follow(current_user.id, user_id)
     
     if not is_followed:
         raise not_followed_exception
     else:
-        UserFollowDAO.delete(is_followed.id)
+        await UserFollowDAO.unfollow(current_user.id, user_id)
         return {'status': 'Вы отписались'}
 
 @user_router.get('/{user_id}/followers', response_model=GetFollowersResponse)
@@ -156,7 +247,7 @@ async def get_followers(user_id: int):
 
     for follow in u_followings:
         ret['users'].append({'id': follow.follower.id,
-                             'name': follow.follower.username})
+                             'username': follow.follower.username})
     
     return ret
 
@@ -167,13 +258,14 @@ async def get_followings(user_id: int):
     
     ret = {'users': [],
            'communities': []}
-
-    for follow in u_followings:
-        ret['users'].append({'id': follow.followed.id,
-                             'username': follow.followed.username})
-    for follow in c_followings:
-        comm = await CommunityDAO.get_by_id(follow.community_id)
-        ret['communities'].append({'id': follow.community_id,
-                                   'name': comm.name})
+    if u_followings != []:
+        for follow in u_followings:
+            ret['users'].append({'id': follow.followed.id,
+                                'username': follow.followed.username})
+    if c_followings != []:
+        for follow in c_followings:
+            comm = await CommunityDAO.get_by_id(follow.community_id)
+            ret['communities'].append({'id': follow.community_id,
+                                    'name': comm.name})
     
     return ret

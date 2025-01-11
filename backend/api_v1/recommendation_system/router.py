@@ -1,13 +1,16 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
-from backend.api_v1.recommendation_system.rs import UserProfile, find_similar_users, users2
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User
 
 
 rs_router = APIRouter(prefix='/rs', tags=['RS management'])
 
+
+@rs_router.get('/find')
+async def find_teammate(current_user: Annotated[User, Depends(get_current_user)]):
+    pass
 
 # @rs_router.get('/find')
 # async def find_tm(current_user: Annotated[User, Depends(get_current_user)]):

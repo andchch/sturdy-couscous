@@ -1,16 +1,15 @@
 from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, relationship, mapped_column
-from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.ext.declarative import declarative_base
 
-from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
+from backend.core.database_sql import Base
 
 AltBase = declarative_base()
 
 class CommunityMembership(Base):
     id = None
-    __tablename__ = "community_memberships"
+    __tablename__ = 'community_memberships'
      
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
     community_id: Mapped[int] = mapped_column(ForeignKey('communities.id'), primary_key=True)
@@ -26,10 +25,10 @@ class Community(Base):
     creator_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
 
     members: Mapped[list['User']] = relationship(
-        "User",
-        secondary="community_memberships",
-        back_populates="communities",
+        'User',
+        secondary='community_memberships',
+        back_populates='communities',
     )
 
-    posts: Mapped[list['Post']] = relationship("Post", back_populates="community")
+    posts: Mapped[list['Post']] = relationship('Post', back_populates='community')
     

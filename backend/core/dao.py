@@ -1,5 +1,6 @@
-from typing import Generic, TypeVar, Optional, List
-from sqlalchemy import select, update, delete
+from typing import Generic, List, Optional, TypeVar
+
+from sqlalchemy import delete, select, update
 
 from .database_sql import Base, async_session
 
