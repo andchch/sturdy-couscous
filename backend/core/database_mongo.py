@@ -30,6 +30,10 @@ class MongoController:
 
     async def get_data(self, collection: str, steam_id: str):
         return await self.db[collection].find_one({'steam_id': steam_id})
+    
+def get_mongo_controller() -> MongoController:
+    mongo = MongoController()
+    return mongo
 
 """
 async def get_user_games(self, user_id: str):

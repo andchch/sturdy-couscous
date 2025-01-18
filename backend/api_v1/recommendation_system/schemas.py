@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 
 
-class data(BaseModel):
+class Mate(BaseModel):
+    user_id: int
     username: str
     score: float
 
-
 class finderResponse(BaseModel):
-    list[dict[data]]
+    info: str
+    mates: list[Mate]
     

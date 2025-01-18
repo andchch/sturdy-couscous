@@ -17,7 +17,8 @@ class UserDAO(BaseDAO[User]):
                 select(cls.model)
                 .where(cls.model.email == email)
                 .options(
-                    joinedload(User.contacts)
+                    joinedload(User.contacts),
+                    joinedload(User.info)
                     )
             )
             result = await session.execute(query)
@@ -47,6 +48,26 @@ class UserDAO(BaseDAO[User]):
             )
             result = await session.execute(query)
             return result.scalar_one_or_none()
+        
+    @classmethod
+    async def get_by_id_with_rs_info(cls, model_id):
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(cls.model.id == model_id)
+                .options(joinedload(cls.model.info))
+            )
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+    
+    @classmethod
+    async def get_others(cls, model_id):
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(cls.model.id != model_id)
+                .options(joinedload(cls.model.info))
+            )
+            result = await session.execute(query)
+            return result.unique().scalars()
 
         
     @classmethod
@@ -85,9 +106,9 @@ class UserDAO(BaseDAO[User]):
             return user.steam_profile
         
     @classmethod
-    async def update_user_info(cls, user_id: int, data: dict):
+    async def update_user_info(cls, user_id: int, data: dict) -> Optional[UserInfo]:
         async with async_session() as session:
-            stmt = select(cls.model).where(User.id == user_id)
+            stmt = select(cls.model).options(joinedload(User.info)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalar_one_or_none()
             if not user:
@@ -95,16 +116,18 @@ class UserDAO(BaseDAO[User]):
             
             if user.info:
                 for key, val in data.items():
+                    print(f'{key} {val}')
                     setattr(user.info, key, val)
             else:
                 user.info = UserInfo(**data)
+                
             await session.commit()
             return user.info
      
     @classmethod   
     async def update_weights(cls, user_id: int, data: dict):
         async with async_session() as session:
-            stmt = select(cls.model).where(User.id == user_id)
+            stmt = select(cls.model).options(joinedload(User.weights)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalar_one_or_none()
             if not user:
@@ -213,4 +236,25 @@ class UserFollowDAO(BaseDAO[UserFollow]):
                     )
                 )
             await session.commit()
-            
+
+class UserWeightsDAO(BaseDAO[UserFollow]):
+    model = UserWeights
+    
+    @classmethod
+    async def get_by_user_id(cls, user_id: int) -> UserWeights:
+        async with async_session() as session:
+            query = (
+                select(cls.model).where(cls.model.user_id == user_id)
+            )
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+        
+    @classmethod
+    async def create_default(cls, user_id: int) -> UserWeights:
+        weights = UserWeights(user_id=user_id, purpose_weight=0.25,
+                              self_assessment_lvl_weight=0.25,
+                              preferred_communication_weight=0.25,
+                              hours_per_week_weight=0.25)
+        await UserDAO.update(user_id, weights=weights)
+        return weights
+    

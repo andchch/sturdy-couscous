@@ -21,6 +21,7 @@ from backend.api_v1.users.schemas import (
     UpdateCreditsRequest,
     UpdateCurrentUserRequest,
     UpdateMeContactsRequest,
+    UserInfoScheme,
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
@@ -80,30 +81,66 @@ async def create_ugm(hour: int):
 @user_router.get('/me', response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     if current_user.contacts:
-        response = GetMeResponse(
-            id=current_user.id,
-            email=current_user.email,
-            username=current_user.username,
-            registration_time=current_user.created_at,
-            gender=current_user.gender,
-            dof=current_user.dof,
-            avatar_url=current_user.avatar_url,
-            contacts=ContactsSchema(vk=current_user.contacts.vk,
-                                    telegram=current_user.contacts.telegram,
-                                    steam=current_user.contacts.steam,
-                                    discord=current_user.contacts.discord)
-            )
+        if current_user.info:
+            response = GetMeResponse(
+                id=current_user.id,
+                email=current_user.email,
+                username=current_user.username,
+                registration_time=current_user.created_at,
+                gender=current_user.gender,
+                dof=current_user.dof,
+                avatar_url=current_user.avatar_url,
+                contacts=ContactsSchema(vk=current_user.contacts.vk,
+                                        telegram=current_user.contacts.telegram,
+                                        steam=current_user.contacts.steam,
+                                        discord=current_user.contacts.discord),
+                info=UserInfoScheme(purpose=current_user.info.purpose,
+                                    self_assessment_lvl=current_user.info.self_assessment_lvl,
+                                    preferred_communication=current_user.info.preferred_communication,
+                                    hours_per_week=current_user.info.hours_per_week)
+                )
+        else:
+            response = GetMeResponse(
+                id=current_user.id,
+                email=current_user.email,
+                username=current_user.username,
+                registration_time=current_user.created_at,
+                gender=current_user.gender,
+                dof=current_user.dof,
+                avatar_url=current_user.avatar_url,
+                contacts=ContactsSchema(vk=current_user.contacts.vk,
+                                        telegram=current_user.contacts.telegram,
+                                        steam=current_user.contacts.steam,
+                                        discord=current_user.contacts.discord),
+                info=None
+                )
     else:
-        response = GetMeResponse(
-            id=current_user.id,
-            email=current_user.email,
-            username=current_user.username,
-            registration_time=current_user.created_at,
-            gender=current_user.gender,
-            dof=current_user.dof,
-            avatar_url=current_user.avatar_url,
-            contacts=None
-            )
+        if current_user.info:
+            response = GetMeResponse(
+                id=current_user.id,
+                email=current_user.email,
+                username=current_user.username,
+                registration_time=current_user.created_at,
+                gender=current_user.gender,
+                dof=current_user.dof,
+                avatar_url=current_user.avatar_url,
+                contacts=None,
+                info=UserInfoScheme(purpose=current_user.info.purpose,
+                                    self_assessment_lvl=current_user.info.self_assessment_lvl,
+                                    preferred_communication=current_user.info.preferred_communication,
+                                    hours_per_week=current_user.info.hours_per_week)
+                )
+        else:
+            response = GetMeResponse(
+                id=current_user.id,
+                email=current_user.email,
+                username=current_user.username,
+                registration_time=current_user.created_at,
+                gender=current_user.gender,
+                dof=current_user.dof,
+                avatar_url=current_user.avatar_url,
+                contacts=None
+                )
     return response
 
 @user_router.get('/{user_id}', response_model=GetUserResponse)
@@ -189,7 +226,7 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
 @user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     data: UpdateCurrentUserRequest):
-    await UserDAO.update_user_info(current_user.id, **data)
+    await UserDAO.update_user_info(current_user.id, data.model_dump())
     return {'status': 'good'}
 
 @user_router.patch('/update-me-avatar', response_model=OnlyStatusResponse)

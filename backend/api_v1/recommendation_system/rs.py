@@ -1,3 +1,4 @@
+"""
 from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -69,68 +70,140 @@ users2 = [
     UserProfile(50, ['RPG', 'Adventure'], {'morning': False, 'afternoon': True, 'evening': True, 'night': False}, 16, ['Tuesday', 'Friday'], 'HIGH', ['PS5'], 'FUN', 'FeatherRaven'),
 ]
 
-def calculate_genre_similarity(user1_genres, user2_genres):
-    mlb = MultiLabelBinarizer()
-    genres_encoded = mlb.fit_transform([user1_genres, user2_genres])
-    return cosine_similarity(genres_encoded)[0, 1]
+"""
 
 
-# def calculate_playtime_similarity(user1_playtime, user2_playtime):
-#     user1_times = np.array(list(user1_playtime.values()))
-#     user2_times = np.array(list(user2_playtime.values()))
-#     return cosine_similarity([user1_times], [user2_times])[0, 0]
+import json
+from sklearn.metrics.pairwise import cosine_similarity
+
+from backend.api_v1.recommendation_system.calc_utils import (
+    euclidean_similarity,
+    jaccard_similarity,
+)
+from sklearn.feature_extraction.text import TfidfVectorizer
+from backend.api_v1.recommendation_system.models import UserRSProfileDAO
+from backend.api_v1.recommendation_system.utilities import make_hashable
+from backend.api_v1.users.dao import UserDAO, UserWeightsDAO
+from backend.api_v1.users.models_sql import UserWeights
+from backend.core.database_mongo import MongoController
+from backend.redis.cache import RedisController
 
 
-# def calculate_day_similarity(user1_days, user2_days):
-#     mlb = MultiLabelBinarizer()
-#     days_encoded = mlb.fit_transform([user1_days, user2_days])
-#     return cosine_similarity(days_encoded)[0, 1]
-
-
-def calculate_total_similarity(user1: UserProfile, user2: UserProfile):    
-    purpose_weight = 0.2
-    self_assessment_lvl_weight = 0.2
-    preferred_communication_weight = 0.2
-    preferred_platforms_weight = 0.2
-    playtime_weight = 0.2
-    hours_per_week_weight = 0.2
-    preferred_days_weight = 0.2
-    preferred_genres_weight = 0.2
-
-    # genre_similarity = calculate_genre_similarity(user1.preferred_genres, user2.preferred_genres)
-    # playtime_similarity = calculate_playtime_similarity(user1.playtime, user2.playtime)
-    # day_similarity = calculate_day_similarity(user1.preferred_days, user2.preferred_days)
-    self_ass_lvl_similarity = 1 if user1.self_ass_lvl == user2.self_ass_lvl else 0
-    # genre_similarity = calculate_genre_similarity(user1.platforms, user2.platforms)
-    platform_similarity = calculate_genre_similarity(user1.platforms, user2.platforms)
-    purpose_similarity = 1 if user1.purpose == user2.purpose else 0
-
-    total_similarity = (
-        # preferred_genres_weight * genre_similarity +
-        # playtime_weight * playtime_similarity +
-        # days_weight * day_similarity +
-        self_assessment_lvl_weight * self_ass_lvl_similarity +
-        preferred_platforms_weight * platform_similarity +
-        purpose_weight * purpose_similarity
-    )
+async def find_teammates(user_id: int, mongo: MongoController, redis: RedisController, top_n: int = 5):
+    low_quality_flag = False
     
-    return total_similarity
+    # берем из кеша, если есть
+    cache_key = f'teammates:{user_id}'
+    cached_result = await redis.redis.get(cache_key)
+    if cached_result:
+        return json.loads(cached_result)
 
+    # Получаем профиль рекомендательный профиль
+    target_user = await UserRSProfileDAO.get_rs_profile_by_id(user_id)
+    if not target_user:
+        return {
+            'info': 'No profile for this user',
+            'mates': []
+        }
+    
+    user_weights = await UserWeightsDAO.get_by_user_id(user_id)
+    if not user_weights:
+        low_quality_flag = True
+        default = {'purpose_weight': 0.25,
+                   'self_assessment_lvl_weight': 0.25,
+                   'preferred_communication_weight': 0.25,
+                   'hours_per_week_weight': 0.25}
+        # user_weights = UserWeights(default)
+        user_weights = default
+    # Получаем всех остальных пользователей
+    all_users = await UserRSProfileDAO.get_all_others(user_id)
 
-def find_similar_users(current_user: UserProfile, users: List[UserProfile], top_n=3):
+    # Получаем игры пользователя и все игры
+    user_games = await mongo.get_data(collection='games', steam_id=user_id)
+    z = await mongo.db.games.find().to_list(length=None)
+    all_users_games = { u['steam_id']: u['response']['games'] for u in z }
+    all_games = list({make_hashable(game): game for games in all_users_games.values() for game in games}.values())
+    
+    all_users_games = {}
+    for item in z:
+        all_users_games[item['user_id']] = [g['name'] for g in item['response']['games']]
+        # if item['user_id'] not in all_users_games.keys():
+        #     all_users_games[item['user_id']] = [item['response']['games']['name']]
+        # else:
+        #     all_users_games[item['user_id']].append(item['response']['games']['name'])
+
+    # tfidf_res = tfidf_similarity2({ u['steam_id']: u['response']['games'] for u in z })
+    all_games_texts = [' '.join(games) for games in all_users_games.values()]
+    vectorizer_games = TfidfVectorizer()
+    tfidf_matrix_games = vectorizer_games.fit_transform(all_games_texts)
+    
+    try:
+        user_index = list(all_users_games.keys()).index(user_id)
+        cosine_sim_games = cosine_similarity(tfidf_matrix_games[user_index], tfidf_matrix_games).flatten()
+    except ValueError:
+        cosine_sim_games = 0
+
+    
+    # weights = {'purpose': user_weights.purpose_weight,
+    #            'self_assessment_lvl': user_weights.self_assessment_lvl_weight,
+    #            'preferred_communication': user_weights.preferred_communication_weight,
+    #            'hours_per_week': user_weights.hours_per_week_weight,
+    # }
+    if isinstance(user_weights, UserWeights):
+        weights1 = { 'hours_per_week': user_weights.hours_per_week_weight }
+    else:
+        weights1 = { 'hours_per_week': user_weights['hours_per_week_weight'] }
+    
     similarities = []
-    
-    for user in users:
-        if user.user_id != current_user.user_id:
-            similarity = calculate_total_similarity(current_user, user)
-            similarities.append((user.user_id, similarity))
-    
-    similarities.sort(key=lambda x: x[1], reverse=True)
-    
-    return similarities[:top_n]
+    for i, other_user in enumerate(all_users):
+        euclidean_score = euclidean_similarity(
+            {'hours_per_week': target_user.hours_per_week},
+            {'hours_per_week': other_user.hours_per_week},
+            weights1
+        )
+        jaccard_purpose = jaccard_similarity({target_user.purpose}, 
+                                          {other_user.purpose})
+        
+        jaccard_self_assessment_lvl = jaccard_similarity({target_user.self_assessment_lvl}, 
+                                          {other_user.self_assessment_lvl})
+        
+        jaccard_comm = jaccard_similarity({target_user.preferred_communication}, 
+                                          {other_user.preferred_communication})
+        
+        if cosine_sim_games != 0:
+            tfidf_games = cosine_sim_games[i]  # Сходство по играм
+        else:
+            tfidf_games = 0
 
-# start_time = time.time()
-# similar_users = find_similar_users(users2[0], users2)
-# end_time = time.time()
-# print(f'Similar users to user 1: {similar_users}')
-# print(f'Time spent: {end_time - start_time}')
+        total_score = (0.2 * euclidean_score + 
+                       0.2 * jaccard_purpose +
+                       0.2 * jaccard_self_assessment_lvl +
+                       0.1 * jaccard_comm +
+                       0.3 * tfidf_games)  # Итоговый балл
+        similarities.append((other_user.id, total_score))
+
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    result = [(user_id[0], user_id[1]) for user_id in similarities[:top_n]]
+    print(result)
+
+    ret = {'info': 'ok'}
+    if low_quality_flag:
+        ret['info'] = 'low_quality'
+    
+    mates = []
+    
+    for i, u in enumerate(result):
+        print(f'{i} - {u} - {u[0][0]} - {u[1]}')
+        user = await UserDAO.get_by_id(u[0][0])
+        mates.append({
+            'user_id': user.id,
+            'username': user.username,
+            'score': u[1]
+        })
+        print(mates)
+    
+    ret.update({'mates': mates})
+    
+    await redis.redis.set(cache_key, json.dumps(ret), ex=1800)  # Кешируем на 30 минут
+    
+    return ret

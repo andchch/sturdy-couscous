@@ -15,6 +15,12 @@ class ShortUser(BaseModel):
     
 class GetAllUsersResponse(BaseModel):
     users: list[ShortUser]
+    
+class UserInfoScheme(BaseModel):
+    purpose: str | None
+    self_assessment_lvl: str | None
+    preferred_communication: str | None
+    hours_per_week: int | None
 
 class GetMeResponse(BaseModel):
     id: int
@@ -25,6 +31,7 @@ class GetMeResponse(BaseModel):
     dof: datetime | None
     avatar_url: str | None
     contacts: ContactsSchema | None
+    info: UserInfoScheme | None
     
 class GetUserResponse(BaseModel):
     id: int
@@ -38,7 +45,7 @@ class CreateUserResponse(BaseModel):
     description: str
     
 class UpdateCurrentUserRequest(BaseModel):
-    gender: str
+    # gender: str
     purpose: str
     self_assessment_lvl: str
     preferred_communication: str
