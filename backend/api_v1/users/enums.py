@@ -9,7 +9,7 @@ class PurposeEnum(enum.StrEnum):
     FUN = 'Для развлечения'
     RESULT = 'На результат'
     
-class SelfAssLvlEnum(enum.StrEnum):
+class SelfAssessmentLvlEnum(enum.StrEnum):
     LOW = 'Начинающий'
     MID = 'Средний'
     HIGH = 'Продвинутый'
@@ -25,4 +25,19 @@ class RatingEnum(enum.IntEnum):
     THREE = 3
     FOUR = 4
     FIVE = 5
+    
+class WeekdayEnum(enum.StrEnum):
+    MONDAY = 'Понедельник'
+    TUESDAY = 'Вторник'
+    WEDNESDAY = 'Среда'
+    THURSDAY = 'Четверг'
+    FRIDAY = 'Пятница'
+    SATURDAY = 'Суббота'
+    SUNDAY = 'Воскресенье'
+    
+class PlatformEnum(enum.StrEnum):
+    PLAYSTATION_4 = 'PlayStation 4'
+    PLAYSTATION_5 = 'PlayStation 5'
+    PC = 'PC'
+    XBOX = 'XBOX'
     

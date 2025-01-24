@@ -2,10 +2,12 @@ from datetime import datetime
 from typing import Annotated
 
 from sqlalchemy import DateTime, Integer, func
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
-from sqlalchemy.orm import declared_attr, mapped_column, DeclarativeBase, Mapped
+from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
-from core.config import get_db_uri
+from backend.core.config import get_db_uri
+
+# from core.config import get_db_uri # for alembic
 
 DATABASE_URI = get_db_uri()
 # TODO: Delete on prod
@@ -18,6 +20,7 @@ unique_str = Annotated[str, mapped_column(unique=True)]
 idx_str = Annotated[str, mapped_column(unique=True, index=True)]
 not_uniuq_idx_str = Annotated[int, mapped_column(nullable=False, index=True)]
 not_null_str = Annotated[str, mapped_column(nullable=False)]
+weight_str = Annotated[float, mapped_column(default=0.2)]
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -33,7 +36,6 @@ class Base(AsyncAttrs, DeclarativeBase):
             tablename += word + '_'
         return f'{tablename[:-1].lower()}s'
 
-    # TODO: Check if pydantic warnings are caused here
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=datetime.now)

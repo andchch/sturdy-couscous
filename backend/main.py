@@ -3,8 +3,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi_csrf_protect import CsrfProtect
 
-from api_v1.users.router import user_router
-from api_v1.auth.router import auth_router
+from backend.api_v1.users.router import user_router
+from backend.api_v1.auth.router import auth_router
+from backend.api_v1.recommendation_system.router import rs_router
+from backend.api_v1.posts.router import posts_router
+from backend.api_v1.communities.router import community_router
+from backend.api_v1.feed.router import feed_router
+from backend.api_v1.external_integration.router import ext_integration_router
 
 
 # TODO: Set up CORS
@@ -24,7 +29,7 @@ origins = [
 #     await delete_tables()
 #     print('Database is cleared')
     
-app = FastAPI(title='Gamers social network')
+app = FastAPI(title='Gamers social network', version='0.1.0')
 # app = FastAPI(title='Gamers social network', lifespan=lifespan)
 
 app.add_middleware(
@@ -39,3 +44,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(posts_router)
+app.include_router(community_router)
+app.include_router(feed_router)
+app.include_router(ext_integration_router)
+app.include_router(rs_router)
