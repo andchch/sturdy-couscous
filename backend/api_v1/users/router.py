@@ -37,7 +37,8 @@ user_router = APIRouter(prefix='/user', tags=['Users management'])
 S3_MEDIA_BUCKET='user.media'
 
 
-@user_router.post('/register', response_model=StatusResponse)
+@user_router.post('/register', response_model=StatusResponse,
+                  description="Register a new user\n\n'gender' может быть только: 'MALE' или 'FEMALE'")
 async def register_user(data: CreateUserRequest):
     data = data.model_dump()
     pot_user = await UserDAO.find_all(username=data['username'], email=data['email'])
@@ -184,7 +185,9 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
             'info': f'Contacts for user {updated_contacts.user_id} updated successfully'}
 
 
-@user_router.patch('/update', response_model=StatusResponse)
+@user_router.patch('/update', response_model=StatusResponse,
+                   description="'gender' может быть только: 'MALE' или 'FEMALE'\n\n "
+                               "'purpose' может быть только: 'FUN' или 'RESULT'")
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     data: UpdateCurrentUserRequest):
     await UserDAO.update_user_info(current_user.id, data.model_dump())

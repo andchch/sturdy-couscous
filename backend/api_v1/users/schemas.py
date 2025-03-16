@@ -42,11 +42,8 @@ class GetUserResponse(BaseModel):
     contacts: ContactsSchema | None
 
 
-class UpdateCurrentUserRequest(BaseModel):
+class UpdateCurrentUserRequest(UserInfoScheme):
     gender: GenderEnum | None
-    purpose: PurposeEnum | None
-    preferred_communication: CommunicationTypeEnum | None
-    hours_per_week: int | None
 
 
 class CreateUserRequest(BaseModel):
