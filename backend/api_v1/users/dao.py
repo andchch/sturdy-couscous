@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.api_v1.external_integration.models_sql import SteamProfile
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserContacts, UserFollow, UserInfo, UserWeights#, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContact, UserFollow, UserInfo, UserWeight#, UserInteraction
 from backend.core.database_sql import async_session
 
 class UserDAO(BaseDAO[User]):
@@ -71,7 +71,7 @@ class UserDAO(BaseDAO[User]):
 
         
     @classmethod
-    async def update_contacts(cls, user_id: int, data: dict) -> Optional[UserContacts]:
+    async def update_contacts(cls, user_id: int, data: dict) -> Optional[UserContact]:
         async with async_session() as session:
             stmt = select(cls.model).options(joinedload(User.contacts)).where(User.id == user_id)
             result = await session.execute(stmt)
@@ -83,7 +83,7 @@ class UserDAO(BaseDAO[User]):
                 for key, val in data.items():
                     setattr(user.contacts, key, val)
             else:
-                user.contacts = UserContacts(**data)
+                user.contacts = UserContact(**data)
 
             await session.commit()
             return user.contacts
@@ -137,7 +137,7 @@ class UserDAO(BaseDAO[User]):
                 for key, val in data.items():
                     setattr(user.weights, key, val)
             else:
-                user.weights = UserWeights(**data)
+                user.weights = UserWeight(**data)
             await session.commit()
             return user.weights
 
@@ -238,10 +238,10 @@ class UserFollowDAO(BaseDAO[UserFollow]):
             await session.commit()
 
 class UserWeightsDAO(BaseDAO[UserFollow]):
-    model = UserWeights
+    model = UserWeight
     
     @classmethod
-    async def get_by_user_id(cls, user_id: int) -> UserWeights:
+    async def get_by_user_id(cls, user_id: int) -> UserWeight:
         async with async_session() as session:
             query = (
                 select(cls.model).where(cls.model.user_id == user_id)
@@ -250,11 +250,11 @@ class UserWeightsDAO(BaseDAO[UserFollow]):
             return result.scalar_one_or_none()
         
     @classmethod
-    async def create_default(cls, user_id: int) -> UserWeights:
-        weights = UserWeights(user_id=user_id, purpose_weight=0.25,
-                              self_assessment_lvl_weight=0.25,
-                              preferred_communication_weight=0.25,
-                              hours_per_week_weight=0.25)
+    async def create_default(cls, user_id: int) -> UserWeight:
+        weights = UserWeight(user_id=user_id, purpose_weight=0.25,
+                             self_assessment_lvl_weight=0.25,
+                             preferred_communication_weight=0.25,
+                             hours_per_week_weight=0.25)
         await UserDAO.update(user_id, weights=weights)
         return weights
     

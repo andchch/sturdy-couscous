@@ -41,17 +41,19 @@ S3_MEDIA_BUCKET='user.media'
 @user_router.post('/register', response_model=CreateUserResponse)
 async def register_user(data: CreateUserRequest):
     data = data.model_dump()
-    pot_user = await UserDAO.find_all(username=data['username'])
-    if pot_user != []:
+    pot_user = await UserDAO.find_all(username=data['username'], email=data['email'])
+    if pot_user:
         raise user_exists_exception
     
     new_user = await UserDAO.create(
         username=data['username'],
         email=data['email'],
         hashed_password=get_password_hash(data['password']),
+        gender=data['gender'],
+        dob=data['dob']
     )
-    response = CreateUserResponse(status=f'User {new_user.username} created successfully',
-                                  description='')
+    response = CreateUserResponse(status=True,
+                                  info=f'User {new_user.username} created successfully')
     return response
 
 """
@@ -87,7 +89,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                 username=current_user.username,
                 registration_time=current_user.created_at,
                 gender=current_user.gender,
-                dof=current_user.dof,
+                dof=current_user.dob,
                 avatar_url=current_user.avatar_url,
                 contacts=ContactsSchema(vk=current_user.contacts.vk,
                                         telegram=current_user.contacts.telegram,
@@ -105,7 +107,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                 username=current_user.username,
                 registration_time=current_user.created_at,
                 gender=current_user.gender,
-                dof=current_user.dof,
+                dof=current_user.dob,
                 avatar_url=current_user.avatar_url,
                 contacts=ContactsSchema(vk=current_user.contacts.vk,
                                         telegram=current_user.contacts.telegram,
@@ -121,7 +123,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                 username=current_user.username,
                 registration_time=current_user.created_at,
                 gender=current_user.gender,
-                dof=current_user.dof,
+                dof=current_user.dob,
                 avatar_url=current_user.avatar_url,
                 contacts=None,
                 info=UserInfoScheme(purpose=current_user.info.purpose,
@@ -136,7 +138,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                 username=current_user.username,
                 registration_time=current_user.created_at,
                 gender=current_user.gender,
-                dof=current_user.dof,
+                dof=current_user.dob,
                 avatar_url=current_user.avatar_url,
                 contacts=None,
                 info=None
@@ -153,7 +155,7 @@ async def get_user(user_id: int):
             id=user.id,
             username=user.username,
             gender=user.gender,
-            dof=user.dof,
+            dof=user.dob,
             contacts=None
             )
         return response
@@ -162,7 +164,7 @@ async def get_user(user_id: int):
             id=user.id,
             username=user.username,
             gender=user.gender,
-            dof=user.dof,
+            dof=user.dob,
             contacts=ContactsSchema(vk=user.contacts.vk,
                                     telegram=user.contacts.telegram,
                                     steam=user.contacts.steam,
@@ -173,7 +175,7 @@ async def get_user(user_id: int):
             id=user.id,
             username=user.username,
             gender=user.gender,
-            dof=user.dof,
+            dof=user.dob,
             contacts=None
             )
     return response

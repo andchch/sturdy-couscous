@@ -84,7 +84,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from backend.api_v1.recommendation_system.models import UserRSProfileDAO
 from backend.api_v1.recommendation_system.utilities import make_hashable
 from backend.api_v1.users.dao import UserDAO, UserWeightsDAO
-from backend.api_v1.users.models_sql import UserWeights
+from backend.api_v1.users.models_sql import UserWeight
 from backend.core.database_mongo import MongoController
 from backend.redis.cache import RedisController
 
@@ -149,7 +149,7 @@ async def find_teammates(user_id: int, mongo: MongoController, redis: RedisContr
     #            'preferred_communication': user_weights.preferred_communication_weight,
     #            'hours_per_week': user_weights.hours_per_week_weight,
     # }
-    if isinstance(user_weights, UserWeights):
+    if isinstance(user_weights, UserWeight):
         weights1 = { 'hours_per_week': user_weights.hours_per_week_weight }
     else:
         weights1 = { 'hours_per_week': user_weights['hours_per_week_weight'] }

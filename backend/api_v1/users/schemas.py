@@ -41,8 +41,8 @@ class GetUserResponse(BaseModel):
     contacts: ContactsSchema | None
     
 class CreateUserResponse(BaseModel):
-    status: str
-    description: str
+    status: bool
+    info: str
     
 class UpdateCurrentUserRequest(BaseModel):
     # gender: str
@@ -56,6 +56,9 @@ class CreateUserRequest(BaseModel):
     username: str
     email: str
     password: str
+    dob: datetime
+    gender: str
+    timezone: str
     
     
 class UpdateMeRequest(BaseModel):

@@ -26,7 +26,7 @@ class UserFollow(Base):
 
     __table_args__ = (UniqueConstraint('follower_id', 'followed_id', name='uq_user_follow'),)
     
-class UserContacts(Base):
+class UserContact(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
     vk: Mapped[str | None]
     telegram: Mapped[str | None]
@@ -35,7 +35,7 @@ class UserContacts(Base):
     
     user: Mapped['User'] = relationship('User', back_populates='contacts')
     
-class UserWeights(Base):
+class UserWeight(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
 
     purpose_weight: Mapped[weight]
@@ -66,8 +66,9 @@ class User(Base):
     hashed_password: Mapped[str]
     
     gender: Mapped[GenderEnum | None]
-    dof: Mapped[datetime | None]
+    dob: Mapped[datetime | None]
     avatar_url: Mapped[str | None]
+    description: Mapped[str | None]
     
     preferred_genres: Mapped[list[Genre]] = relationship(
         secondary=user_genre_association_table
@@ -78,12 +79,12 @@ class User(Base):
         cascade='all, delete-orphan'
     )
     
-    contacts: Mapped['UserContacts'] = relationship(
+    contacts: Mapped['UserContact'] = relationship(
         'UserContacts', back_populates='user', uselist=False, 
         cascade='all, delete-orphan'
     )
     
-    weights: Mapped['UserWeights'] = relationship(
+    weights: Mapped['UserWeight'] = relationship(
         'UserWeights', back_populates='user', uselist=False, 
         cascade='all, delete-orphan'
     )
