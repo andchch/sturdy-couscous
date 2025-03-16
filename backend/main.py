@@ -6,9 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api_v1.users.router import user_router
 from backend.api_v1.auth.router import auth_router
 from backend.api_v1.recommendation_system.router import rs_router
-from backend.api_v1.posts.router import posts_router
-from backend.api_v1.communities.router import community_router
-from backend.api_v1.feed.router import feed_router
 from backend.api_v1.external_integration.router import ext_integration_router
 
 
@@ -18,6 +15,8 @@ origins = [
     'http://localhost:8000',
     'http://127.0.0.1',
     'http://127.0.0.1:8000',
+    'http://localhost:3000',
+    '*:3000',
     '*']
 
 # TODO: Set up DB creation on startup
@@ -44,8 +43,5 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
-app.include_router(posts_router)
-app.include_router(community_router)
-app.include_router(feed_router)
 app.include_router(ext_integration_router)
-app.include_router(rs_router)
+# app.include_router(rs_router)

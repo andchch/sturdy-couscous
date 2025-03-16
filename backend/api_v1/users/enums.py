@@ -2,8 +2,8 @@ import enum
 
 
 class GenderEnum(enum.StrEnum):
-    MALE = 'мужской'
-    FEMALE = 'женский'
+    MALE = 'Male'
+    FEMALE = 'Female'
     
 class PurposeEnum(enum.StrEnum):
     FUN = 'Для развлечения'
@@ -15,16 +15,9 @@ class SelfAssessmentLvlEnum(enum.StrEnum):
     HIGH = 'Продвинутый'
     
 class CommunicationTypeEnum(enum.StrEnum):
-    VOICE = 'Голосовой'
-    TEXT = 'Внутриигровой чат'
-    NO = 'Нет'
-    
-class RatingEnum(enum.IntEnum):
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
+    VOICE = 'Согл'
+    NO_VOICE = 'Внутриигровой чат'
+    INDIFFERENT = 'Все равно'
     
 class WeekdayEnum(enum.StrEnum):
     MONDAY = 'Понедельник'
@@ -34,10 +27,4 @@ class WeekdayEnum(enum.StrEnum):
     FRIDAY = 'Пятница'
     SATURDAY = 'Суббота'
     SUNDAY = 'Воскресенье'
-    
-class PlatformEnum(enum.StrEnum):
-    PLAYSTATION_4 = 'PlayStation 4'
-    PLAYSTATION_5 = 'PlayStation 5'
-    PC = 'PC'
-    XBOX = 'XBOX'
     
