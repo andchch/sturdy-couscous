@@ -176,34 +176,21 @@ async def get_user(user_id: int):
     user = await UserDAO.get_by_id(user_id)
     if user is None:
         raise user_not_exists_exception
-    if user.contacts is None:
-        response = GetUserResponse(
-            id=user.id,
-            username=user.username,
-            gender=user.gender,
-            dof=user.dob,
-            contacts=None
-            )
-        return response
-    if hasattr(user, 'contacts'):
-        response = GetUserResponse(
-            id=user.id,
-            username=user.username,
-            gender=user.gender,
-            dof=user.dob,
-            contacts=ContactsSchema(vk=user.contacts.vk,
-                                    telegram=user.contacts.telegram,
-                                    steam=user.contacts.steam,
-                                    discord=user.contacts.discord)
-            )
+    if user.contacts:
+        user_contacts = user.contacts
+        user_contacts = ContactsSchema(vk=user_contacts.vk,
+                                       telegram=user_contacts.telegram,
+                                       steam=user_contacts.steam,
+                                       discord=user_contacts.discord)
     else:
-        response = GetUserResponse(
-            id=user.id,
-            username=user.username,
-            gender=user.gender,
-            dof=user.dob,
-            contacts=None
-            )
+        user_contacts = None
+
+    response = GetUserResponse(id=user.id,
+                                username=user.username,
+                                gender=user.gender,
+                                dof=user.dob,
+                                contacts=user_contacts)
+
     return response
 
 @user_router.patch('/change-credits')
