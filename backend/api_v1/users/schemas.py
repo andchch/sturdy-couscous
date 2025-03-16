@@ -48,6 +48,7 @@ class UpdateCurrentUserRequest(BaseModel):
     preferred_communication: CommunicationTypeEnum | None
     hours_per_week: int | None
 
+
 class CreateUserRequest(BaseModel):
     username: str
     email: str
@@ -55,23 +56,6 @@ class CreateUserRequest(BaseModel):
     dob: datetime
     gender: GenderEnum
     timezone: str
-    
-    
-class UpdateMeRequest(BaseModel):
-    gender: str | None
-    
-    purpose: PurposeEnum | None
-    self_assessment_lvl: str | None
-    preferred_communication: str | None
-    hours_per_week: int | None
-    
-
-class RSResponse(BaseModel):
-    result: list[GetMeResponse]
-
-
-class UpdateCredentialsRequest(BaseModel):
-    username: str | None
 
 
 class UpdateContactsRequest(BaseModel):
@@ -83,25 +67,25 @@ class UpdateContactsRequest(BaseModel):
 
 class OnlyStatusResponse(BaseModel):
     status: str
-    
+
+
 class GetAvatarResponse(BaseModel):
     avatar_url: str
-    
+
+
 class UsersShort(BaseModel):
     id: int
     username: str
-    
-class CommunityShort(BaseModel):
-    id: int
-    name: str
+
     
 class GetFollowersResponse(BaseModel):
     users: list[UsersShort]
 
+
 class GetFollowingsResponse(BaseModel):
     users: list[UsersShort]
-    communities: list[CommunityShort]
-    
+
+
 class UpdateCreditsRequest(BaseModel):
     new_username: str | None
     new_password: str | None

@@ -238,6 +238,7 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
         await UserFollowDAO.unfollow(current_user.id, user_id)
         return {'status': 'Вы отписались'}
 
+# TODO: Проверить эндпоинты, связанные с подпиской и их схемы
 @user_router.get('/{user_id}/followers', response_model=GetFollowersResponse, description='NOT TESTES')
 async def get_followers(user_id: int):
     u_followings = await UserFollowDAO.find_followers(user_id=user_id)
