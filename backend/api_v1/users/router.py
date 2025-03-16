@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, UploadFile
 
 from backend.api_v1.auth.auth import get_password_hash
-from backend.api_v1.communities.dao import CommunityDAO, CommunityMembershipDAO
 from backend.api_v1.users.dao import UserDAO, UserFollowDAO
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User
@@ -78,7 +77,7 @@ async def create_ugm(hour: int):
 """
 
 
-@user_router.get('/me', response_model=GetMeResponse)
+@user_router.get('/me')#, response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     if current_user.contacts:
         if current_user.info:
@@ -139,7 +138,8 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                 gender=current_user.gender,
                 dof=current_user.dof,
                 avatar_url=current_user.avatar_url,
-                contacts=None
+                contacts=None,
+                info=None
                 )
     return response
 
@@ -285,24 +285,5 @@ async def get_followers(user_id: int):
     for follow in u_followings:
         ret['users'].append({'id': follow.follower.id,
                              'username': follow.follower.username})
-    
-    return ret
-
-@user_router.get('/{user_id}/following', response_model=GetFollowingsResponse)
-async def get_followings(user_id: int):
-    u_followings = await UserFollowDAO.find_follows(user_id=user_id)
-    c_followings = await CommunityMembershipDAO.get_all_users_communities(user_id)
-    
-    ret = {'users': [],
-           'communities': []}
-    if u_followings != []:
-        for follow in u_followings:
-            ret['users'].append({'id': follow.followed.id,
-                                'username': follow.followed.username})
-    if c_followings != []:
-        for follow in c_followings:
-            comm = await CommunityDAO.get_by_id(follow.community_id)
-            ret['communities'].append({'id': follow.community_id,
-                                    'name': comm.name})
     
     return ret
