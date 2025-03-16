@@ -10,7 +10,6 @@ from backend.api_v1.users.schemas import (
     ContactsSchema,
     CreateUserRequest,
     StatusResponse,
-    GetAllUsersResponse,
     GetAvatarResponse,
     GetFollowersResponse,
     GetFollowingsResponse,
@@ -19,7 +18,7 @@ from backend.api_v1.users.schemas import (
     OnlyStatusResponse,
     UpdateCreditsRequest,
     UpdateCurrentUserRequest,
-    UpdateMeContactsRequest,
+    UpdateContactsRequest,
     UserInfoScheme,
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
@@ -108,68 +107,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                              contacts=user_contacts,
                              info=user_info)
     return response
-    # if current_user.contacts:
-    #     if current_user.info:
-    #         response = GetMeResponse(
-    #             id=current_user.id,
-    #             email=current_user.email,
-    #             username=current_user.username,
-    #             registration_time=current_user.created_at,
-    #             gender=current_user.gender,
-    #             dof=current_user.dob,
-    #             avatar_url=current_user.avatar_url,
-    #             contacts=ContactsSchema(vk=current_user.contacts.vk,
-    #                                     telegram=current_user.contacts.telegram,
-    #                                     steam=current_user.contacts.steam,
-    #                                     discord=current_user.contacts.discord),
-    #             info=UserInfoScheme(purpose=current_user.info.purpose,
-    #                                 preferred_communication=current_user.info.preferred_communication,
-    #                                 hours_per_week=current_user.info.hours_per_week)
-    #             )
-    #     else:
-    #         response = GetMeResponse(
-    #             id=current_user.id,
-    #             email=current_user.email,
-    #             username=current_user.username,
-    #             registration_time=current_user.created_at,
-    #             gender=current_user.gender,
-    #             dof=current_user.dob,
-    #             avatar_url=current_user.avatar_url,
-    #             contacts=ContactsSchema(vk=current_user.contacts.vk,
-    #                                     telegram=current_user.contacts.telegram,
-    #                                     steam=current_user.contacts.steam,
-    #                                     discord=current_user.contacts.discord),
-    #             info=None
-    #             )
-    # else:
-    #     if current_user.info:
-    #         response = GetMeResponse(
-    #             id=current_user.id,
-    #             email=current_user.email,
-    #             username=current_user.username,
-    #             registration_time=current_user.created_at,
-    #             gender=current_user.gender,
-    #             dof=current_user.dob,
-    #             avatar_url=current_user.avatar_url,
-    #             contacts=None,
-    #             info=UserInfoScheme(purpose=current_user.info.purpose,
-    #                                 self_assessment_lvl=current_user.info.self_assessment_lvl,
-    #                                 preferred_communication=current_user.info.preferred_communication,
-    #                                 hours_per_week=current_user.info.hours_per_week)
-    #             )
-    #     else:
-    #         response = GetMeResponse(
-    #             id=current_user.id,
-    #             email=current_user.email,
-    #             username=current_user.username,
-    #             registration_time=current_user.created_at,
-    #             gender=current_user.gender,
-    #             dof=current_user.dob,
-    #             avatar_url=current_user.avatar_url,
-    #             contacts=None,
-    #             info=None
-    #             )
-    # return response
+
 
 @user_router.get('/{user_id}', response_model=GetUserResponse)
 async def get_user(user_id: int):
@@ -193,7 +131,8 @@ async def get_user(user_id: int):
 
     return response
 
-@user_router.patch('/change-credits')
+
+@user_router.patch('/change-credits', response_model=StatusResponse)
 async def change_users_creds(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateCreditsRequest):
     new_credits = {}
@@ -205,11 +144,13 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
     if data.new_password:
         new_credits['hashed_password'] = get_password_hash(data.new_password)
     if data.new_dob:
-        new_credits['dof'] = data.new_dob
-    
-    await UserDAO.update(current_user.id, **new_credits)
-    return {'status': 'успешно изменено'}
-    
+        new_credits['dob'] = data.new_dob
+
+    updated_user = await UserDAO.update(current_user.id, **new_credits)
+    return {'status': True,
+            'info' : f'User {updated_user.id} has been updated.'}
+
+
 # @user_router.get('/', response_model=GetAllUsersResponse)
 # async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
 #     ret = {'users': []}
@@ -230,22 +171,25 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
 #     else:
 #         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
 #         return {'status': 'password has been changed'}
-    
+
+
 @user_router.patch('/update-contacts', response_model=StatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
-                             data: UpdateMeContactsRequest):
+                             data: UpdateContactsRequest):
     updated_contacts = await UserDAO.update_contacts(current_user.id, data.model_dump())
     if updated_contacts is None:
         raise user_not_exists_exception
 
     return {'status': True,
             'info': f'Contacts for user {updated_contacts.user_id} updated successfully'}
-    
-@user_router.patch('/update-me', response_model=OnlyStatusResponse)
+
+
+@user_router.patch('/update-me', response_model=StatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     data: UpdateCurrentUserRequest):
     await UserDAO.update_user_info(current_user.id, data.model_dump())
-    return {'status': 'good'}
+    return {'status': True,
+            'info': f'User {current_user.id} updated successfully'}
 
 @user_router.patch('/update-me-avatar', response_model=OnlyStatusResponse)
 async def update_avatar(current_user: Annotated[User, Depends(get_current_user)],

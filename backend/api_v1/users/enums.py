@@ -9,11 +9,6 @@ class PurposeEnum(enum.StrEnum):
     FUN = 'Для развлечения'
     RESULT = 'На результат'
     
-class SelfAssessmentLvlEnum(enum.StrEnum):
-    LOW = 'Начинающий'
-    MID = 'Средний'
-    HIGH = 'Продвинутый'
-    
 class CommunicationTypeEnum(enum.StrEnum):
     VOICE = 'Согл'
     NO_VOICE = 'Внутриигровой чат'

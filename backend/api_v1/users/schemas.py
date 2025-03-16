@@ -1,7 +1,12 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from backend.api_v1.users.enums import GenderEnum
+from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum
+
+
+class StatusResponse(BaseModel):
+    status: bool
+    info: str
 
 
 class ContactsSchema(BaseModel):
@@ -9,19 +14,13 @@ class ContactsSchema(BaseModel):
     telegram: str | None
     steam: str | None
     discord: str | None
-    
-class ShortUser(BaseModel):
-    id: int
-    username: str
-    avatar_url: str
-    
-class GetAllUsersResponse(BaseModel):
-    users: list[ShortUser]
+
     
 class UserInfoScheme(BaseModel):
-    purpose: str | None
+    purpose: PurposeEnum | None
     preferred_communication: str | None
     hours_per_week: int | None
+
 
 class GetMeResponse(BaseModel):
     id: int
@@ -33,25 +32,21 @@ class GetMeResponse(BaseModel):
     avatar_url: str
     contacts: ContactsSchema | None
     info: UserInfoScheme | None
-    
+
+
 class GetUserResponse(BaseModel):
     id: int
     username: str
     gender: str | None
     dof: datetime | None
     contacts: ContactsSchema | None
-    
-class StatusResponse(BaseModel):
-    status: bool
-    info: str
-    
-class UpdateCurrentUserRequest(BaseModel):
-    # gender: str
-    purpose: str
-    self_assessment_lvl: str
-    preferred_communication: str
-    hours_per_week: int
 
+
+class UpdateCurrentUserRequest(BaseModel):
+    gender: GenderEnum | None
+    purpose: PurposeEnum | None
+    preferred_communication: CommunicationTypeEnum | None
+    hours_per_week: int | None
 
 class CreateUserRequest(BaseModel):
     username: str
@@ -65,7 +60,7 @@ class CreateUserRequest(BaseModel):
 class UpdateMeRequest(BaseModel):
     gender: str | None
     
-    purpose: str | None
+    purpose: PurposeEnum | None
     self_assessment_lvl: str | None
     preferred_communication: str | None
     hours_per_week: int | None
@@ -77,13 +72,15 @@ class RSResponse(BaseModel):
 
 class UpdateCredentialsRequest(BaseModel):
     username: str | None
-    
-class UpdateMeContactsRequest(BaseModel):
+
+
+class UpdateContactsRequest(BaseModel):
     vk: str | None
     telegram: str | None
     steam: str | None
     discord: str | None
-    
+
+
 class OnlyStatusResponse(BaseModel):
     status: str
     
