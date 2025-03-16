@@ -30,7 +30,7 @@ from .exceptions import (
     not_followed_exception,
     self_follow_exception,
     user_exists_exception,
-    user_not_exists_exception,
+    user_not_exists_exception, avatar_file_exception,
 )
 
 user_router = APIRouter(prefix='/user', tags=['Users management'])
@@ -184,7 +184,7 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
             'info': f'Contacts for user {updated_contacts.user_id} updated successfully'}
 
 
-@user_router.patch('/update-me', response_model=StatusResponse)
+@user_router.patch('/update', response_model=StatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
                     data: UpdateCurrentUserRequest):
     await UserDAO.update_user_info(current_user.id, data.model_dump())
@@ -201,14 +201,16 @@ async def update_description(current_user: Annotated[User, Depends(get_current_u
             'info': f'User {current_user.id} updated description successfully'}
 
 
-@user_router.patch('/update-me-avatar', response_model=OnlyStatusResponse)
+@user_router.patch('/update-avatar', response_model=StatusResponse)
 async def update_avatar(current_user: Annotated[User, Depends(get_current_user)],
                         new_avatar: UploadFile | None = File(None)):
-    if new_avatar is not None:
+    if new_avatar.filename != '':
         file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
         await UserDAO.update(current_user.id, avatar_url=file_url)
-    
-    return {'status': 'good'}
+    else:
+        raise avatar_file_exception
+    return {'status': True,
+            'info': f'User {current_user.id} updated avatar successfully'}
 
 @user_router.get('/{user_id}/get-avatar', response_model=GetAvatarResponse)
 async def get_avatar(user_id: int, rediska: Annotated[RedisController, Depends(get_redis_controller)]):
