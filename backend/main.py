@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi_csrf_protect import CsrfProtect
 
+from backend.admin import create_admin
 from backend.api_v1.users.router import user_router
 from backend.api_v1.auth.router import auth_router
 from backend.api_v1.recommendation_system.router import rs_router
@@ -29,6 +30,7 @@ origins = [
 #     print('Database is cleared')
     
 app = FastAPI(title='Gamers social network', version='0.1.0')
+create_admin(app)
 # app = FastAPI(title='Gamers social network', lifespan=lifespan)
 
 app.add_middleware(

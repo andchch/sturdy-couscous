@@ -79,71 +79,97 @@ async def create_ugm(hour: int):
 """
 
 
-@user_router.get('/me')#, response_model=GetMeResponse)
+@user_router.get('/me', response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     if current_user.contacts:
-        if current_user.info:
-            response = GetMeResponse(
-                id=current_user.id,
-                email=current_user.email,
-                username=current_user.username,
-                registration_time=current_user.created_at,
-                gender=current_user.gender,
-                dof=current_user.dob,
-                avatar_url=current_user.avatar_url,
-                contacts=ContactsSchema(vk=current_user.contacts.vk,
-                                        telegram=current_user.contacts.telegram,
-                                        steam=current_user.contacts.steam,
-                                        discord=current_user.contacts.discord),
-                info=UserInfoScheme(purpose=current_user.info.purpose,
-                                    self_assessment_lvl=current_user.info.self_assessment_lvl,
-                                    preferred_communication=current_user.info.preferred_communication,
-                                    hours_per_week=current_user.info.hours_per_week)
-                )
-        else:
-            response = GetMeResponse(
-                id=current_user.id,
-                email=current_user.email,
-                username=current_user.username,
-                registration_time=current_user.created_at,
-                gender=current_user.gender,
-                dof=current_user.dob,
-                avatar_url=current_user.avatar_url,
-                contacts=ContactsSchema(vk=current_user.contacts.vk,
-                                        telegram=current_user.contacts.telegram,
-                                        steam=current_user.contacts.steam,
-                                        discord=current_user.contacts.discord),
-                info=None
-                )
+        user_contacts = current_user.contacts
+        user_contacts = ContactsSchema(vk=user_contacts.vk,
+                                       telegram=user_contacts.telegram,
+                                       steam=user_contacts.steam,
+                                       discord=user_contacts.discord)
     else:
-        if current_user.info:
-            response = GetMeResponse(
-                id=current_user.id,
-                email=current_user.email,
-                username=current_user.username,
-                registration_time=current_user.created_at,
-                gender=current_user.gender,
-                dof=current_user.dob,
-                avatar_url=current_user.avatar_url,
-                contacts=None,
-                info=UserInfoScheme(purpose=current_user.info.purpose,
-                                    self_assessment_lvl=current_user.info.self_assessment_lvl,
-                                    preferred_communication=current_user.info.preferred_communication,
-                                    hours_per_week=current_user.info.hours_per_week)
-                )
-        else:
-            response = GetMeResponse(
-                id=current_user.id,
-                email=current_user.email,
-                username=current_user.username,
-                registration_time=current_user.created_at,
-                gender=current_user.gender,
-                dof=current_user.dob,
-                avatar_url=current_user.avatar_url,
-                contacts=None,
-                info=None
-                )
+        user_contacts = None
+
+    if current_user.info:
+        user_info = current_user.info
+        user_info = UserInfoScheme(purpose=user_info.purpose,
+                                   preferred_communication=user_info.preferred_communication,
+                                   hours_per_week=user_info.hours_per_week)
+    else:
+        user_info = None
+
+    response = GetMeResponse(id=current_user.id,
+                             email=current_user.email,
+                             username=current_user.username,
+                             registration_time=current_user.created_at,
+                             gender=current_user.gender,
+                             dob=current_user.dob,
+                             avatar_url=current_user.avatar_url,
+                             contacts=user_contacts,
+                             info=user_info)
     return response
+    # if current_user.contacts:
+    #     if current_user.info:
+    #         response = GetMeResponse(
+    #             id=current_user.id,
+    #             email=current_user.email,
+    #             username=current_user.username,
+    #             registration_time=current_user.created_at,
+    #             gender=current_user.gender,
+    #             dof=current_user.dob,
+    #             avatar_url=current_user.avatar_url,
+    #             contacts=ContactsSchema(vk=current_user.contacts.vk,
+    #                                     telegram=current_user.contacts.telegram,
+    #                                     steam=current_user.contacts.steam,
+    #                                     discord=current_user.contacts.discord),
+    #             info=UserInfoScheme(purpose=current_user.info.purpose,
+    #                                 preferred_communication=current_user.info.preferred_communication,
+    #                                 hours_per_week=current_user.info.hours_per_week)
+    #             )
+    #     else:
+    #         response = GetMeResponse(
+    #             id=current_user.id,
+    #             email=current_user.email,
+    #             username=current_user.username,
+    #             registration_time=current_user.created_at,
+    #             gender=current_user.gender,
+    #             dof=current_user.dob,
+    #             avatar_url=current_user.avatar_url,
+    #             contacts=ContactsSchema(vk=current_user.contacts.vk,
+    #                                     telegram=current_user.contacts.telegram,
+    #                                     steam=current_user.contacts.steam,
+    #                                     discord=current_user.contacts.discord),
+    #             info=None
+    #             )
+    # else:
+    #     if current_user.info:
+    #         response = GetMeResponse(
+    #             id=current_user.id,
+    #             email=current_user.email,
+    #             username=current_user.username,
+    #             registration_time=current_user.created_at,
+    #             gender=current_user.gender,
+    #             dof=current_user.dob,
+    #             avatar_url=current_user.avatar_url,
+    #             contacts=None,
+    #             info=UserInfoScheme(purpose=current_user.info.purpose,
+    #                                 self_assessment_lvl=current_user.info.self_assessment_lvl,
+    #                                 preferred_communication=current_user.info.preferred_communication,
+    #                                 hours_per_week=current_user.info.hours_per_week)
+    #             )
+    #     else:
+    #         response = GetMeResponse(
+    #             id=current_user.id,
+    #             email=current_user.email,
+    #             username=current_user.username,
+    #             registration_time=current_user.created_at,
+    #             gender=current_user.gender,
+    #             dof=current_user.dob,
+    #             avatar_url=current_user.avatar_url,
+    #             contacts=None,
+    #             info=None
+    #             )
+    # return response
 
 @user_router.get('/{user_id}', response_model=GetUserResponse)
 async def get_user(user_id: int):

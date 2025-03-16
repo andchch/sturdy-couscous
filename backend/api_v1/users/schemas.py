@@ -1,6 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel
 
+from backend.api_v1.users.enums import GenderEnum
+
 
 class ContactsSchema(BaseModel):
     vk: str | None
@@ -18,7 +20,6 @@ class GetAllUsersResponse(BaseModel):
     
 class UserInfoScheme(BaseModel):
     purpose: str | None
-    self_assessment_lvl: str | None
     preferred_communication: str | None
     hours_per_week: int | None
 
@@ -27,9 +28,9 @@ class GetMeResponse(BaseModel):
     email: str
     username: str
     registration_time: datetime
-    gender: str | None
-    dof: datetime | None
-    avatar_url: str | None
+    gender: str
+    dob: datetime
+    avatar_url: str
     contacts: ContactsSchema | None
     info: UserInfoScheme | None
     
@@ -57,7 +58,7 @@ class CreateUserRequest(BaseModel):
     email: str
     password: str
     dob: datetime
-    gender: str
+    gender: GenderEnum
     timezone: str
     
     

@@ -1,13 +1,10 @@
 from sqladmin import Admin, ModelView
 
-from backend.main import app
 from backend.core.database_sql import async_engine
 
 from backend.api_v1.users.models_sql import Genre, User, UserContact, UserFollow, UserInfo, UserWeight
 from backend.api_v1.external_integration.models_sql import SteamProfile
 
-
-admin = Admin(app, async_engine)
 
 class UserAdmin(ModelView, model=User):
     column_list = [User.username, User.email]
@@ -29,11 +26,14 @@ class UserWeightAdmin(ModelView, model=UserWeight):
     
 class UserInfoAdmin(ModelView, model=UserInfo):
     column_list = [UserInfo.user_id]
-    
-admin.add_view(UserAdmin)
-admin.add_view(SteamProfileAdmin)
-admin.add_view(GenreAdmin)
-admin.add_view(UserFollowAdmin)
-admin.add_view(UserContactAdmin)
-admin.add_view(UserWeightAdmin)
-admin.add_view(UserInfoAdmin)
+
+def create_admin(app):
+    admin = Admin(app, async_engine)
+
+    admin.add_view(UserAdmin)
+    admin.add_view(SteamProfileAdmin)
+    admin.add_view(GenreAdmin)
+    admin.add_view(UserFollowAdmin)
+    admin.add_view(UserContactAdmin)
+    admin.add_view(UserWeightAdmin)
+    admin.add_view(UserInfoAdmin)

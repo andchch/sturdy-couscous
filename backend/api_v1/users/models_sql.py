@@ -55,7 +55,6 @@ class UserInfo(Base):
     
     purpose: Mapped[PurposeEnum | None]
     preferred_communication: Mapped[CommunicationTypeEnum | None]
-    
     hours_per_week: Mapped[int | None]
     
     user: Mapped['User'] = relationship('User', back_populates='info')
@@ -80,12 +79,12 @@ class User(Base):
     )
     
     contacts: Mapped['UserContact'] = relationship(
-        'UserContacts', back_populates='user', uselist=False, 
+        'UserContact', back_populates='user', uselist=False,
         cascade='all, delete-orphan'
     )
     
     weights: Mapped['UserWeight'] = relationship(
-        'UserWeights', back_populates='user', uselist=False, 
+        'UserWeight', back_populates='user', uselist=False,
         cascade='all, delete-orphan'
     )
     
