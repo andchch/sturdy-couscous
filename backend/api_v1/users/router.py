@@ -9,7 +9,7 @@ from backend.api_v1.users.models_sql import User
 from backend.api_v1.users.schemas import (
     ContactsSchema,
     CreateUserRequest,
-    CreateUserResponse,
+    StatusResponse,
     GetAllUsersResponse,
     GetAvatarResponse,
     GetFollowersResponse,
@@ -38,7 +38,7 @@ user_router = APIRouter(prefix='/user', tags=['Users management'])
 S3_MEDIA_BUCKET='user.media'
 
 
-@user_router.post('/register', response_model=CreateUserResponse)
+@user_router.post('/register', response_model=StatusResponse)
 async def register_user(data: CreateUserRequest):
     data = data.model_dump()
     pot_user = await UserDAO.find_all(username=data['username'], email=data['email'])
@@ -52,8 +52,8 @@ async def register_user(data: CreateUserRequest):
         gender=data['gender'],
         dob=data['dob']
     )
-    response = CreateUserResponse(status=True,
-                                  info=f'User {new_user.username} created successfully')
+    response = StatusResponse(status=True,
+                              info=f'User {new_user.username} created successfully')
     return response
 
 """
@@ -210,17 +210,17 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
     await UserDAO.update(current_user.id, **new_credits)
     return {'status': 'успешно изменено'}
     
-@user_router.get('/', response_model=GetAllUsersResponse)
-async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
-    ret = {'users': []}
-    users = await UserDAO.find_all()
-    for user in users:
-        add = {'id': user.id,
-               'username': user.username,
-               'avatar_url': await get_cached_avatar_url(user.id, rediska)}
-        ret['users'].append(add)
-    
-    return ret
+# @user_router.get('/', response_model=GetAllUsersResponse)
+# async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
+#     ret = {'users': []}
+#     users = await UserDAO.find_all()
+#     for user in users:
+#         add = {'id': user.id,
+#                'username': user.username,
+#                'avatar_url': await get_cached_avatar_url(user.id, rediska)}
+#         ret['users'].append(add)
+#
+#     return ret
 
 # @user_router.patch('/{user_id}/change-password', response_model=OnlyStatusResponse)
 # async def change_password(user_id: int, new_password: str = Form(...)):
@@ -231,12 +231,15 @@ async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_co
 #         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
 #         return {'status': 'password has been changed'}
     
-@user_router.patch('/update-me-contacts', response_model=OnlyStatusResponse)
+@user_router.patch('/update-contacts', response_model=StatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateMeContactsRequest):
-    await UserDAO.update_contacts(current_user.id, data.model_dump())
-    
-    return {'status': 'good'}
+    updated_contacts = await UserDAO.update_contacts(current_user.id, data.model_dump())
+    if updated_contacts is None:
+        raise user_not_exists_exception
+
+    return {'status': True,
+            'info': f'Contacts for user {updated_contacts.user_id} updated successfully'}
     
 @user_router.patch('/update-me', response_model=OnlyStatusResponse)
 async def update_me(current_user: Annotated[User, Depends(get_current_user)],
@@ -265,7 +268,7 @@ async def get_avatar(user_id: int, rediska: Annotated[RedisController, Depends(g
         else:
             return {'avatar_url': 'no avatar'}
 
-@user_router.post('/{user_id}/follow', response_model=OnlyStatusResponse)
+@user_router.post('/{user_id}/follow', response_model=OnlyStatusResponse, description='NOT TESTES')
 async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
     is_followed = await UserFollowDAO.check_follow(current_user.id, user_id)
     if current_user.id == user_id:
@@ -281,7 +284,7 @@ async def follow_user(user_id: int, current_user: User = Depends(get_current_use
     
     return {'status': 'Подписка успешна'}
 
-@user_router.delete('/{user_id}/unfollow', response_model=OnlyStatusResponse)
+@user_router.delete('/{user_id}/unfollow', response_model=OnlyStatusResponse, description='NOT TESTES')
 async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
     is_followed = await UserFollowDAO.check_follow(current_user.id, user_id)
     
@@ -291,7 +294,7 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
         await UserFollowDAO.unfollow(current_user.id, user_id)
         return {'status': 'Вы отписались'}
 
-@user_router.get('/{user_id}/followers', response_model=GetFollowersResponse)
+@user_router.get('/{user_id}/followers', response_model=GetFollowersResponse, description='NOT TESTES')
 async def get_followers(user_id: int):
     u_followings = await UserFollowDAO.find_followers(user_id=user_id)
     

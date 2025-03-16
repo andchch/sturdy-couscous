@@ -41,7 +41,7 @@ class GetUserResponse(BaseModel):
     dof: datetime | None
     contacts: ContactsSchema | None
     
-class CreateUserResponse(BaseModel):
+class StatusResponse(BaseModel):
     status: bool
     info: str
     
@@ -79,10 +79,10 @@ class UpdateCredentialsRequest(BaseModel):
     username: str | None
     
 class UpdateMeContactsRequest(BaseModel):
-    vk: str
-    telegram: str
-    steam: str
-    discord: str
+    vk: str | None
+    telegram: str | None
+    steam: str | None
+    discord: str | None
     
 class OnlyStatusResponse(BaseModel):
     status: str
