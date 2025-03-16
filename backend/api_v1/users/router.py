@@ -19,7 +19,7 @@ from backend.api_v1.users.schemas import (
     UpdateCreditsRequest,
     UpdateCurrentUserRequest,
     UpdateContactsRequest,
-    UserInfoScheme,
+    UserInfoScheme, UpdateDescriptionsRequest,
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
@@ -190,6 +190,16 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
     await UserDAO.update_user_info(current_user.id, data.model_dump())
     return {'status': True,
             'info': f'User {current_user.id} updated successfully'}
+
+
+@user_router.patch('/update-description', response_model=StatusResponse)
+async def update_description(current_user: Annotated[User, Depends(get_current_user)],
+                             data: UpdateDescriptionsRequest):
+    await UserDAO.update(current_user.id, **data.model_dump())
+
+    return {'status': True,
+            'info': f'User {current_user.id} updated description successfully'}
+
 
 @user_router.patch('/update-me-avatar', response_model=OnlyStatusResponse)
 async def update_avatar(current_user: Annotated[User, Depends(get_current_user)],

@@ -90,4 +90,7 @@ class UpdateCreditsRequest(BaseModel):
     new_username: str | None
     new_password: str | None
     new_dob: datetime | None
-    
+
+
+class UpdateDescriptionsRequest(BaseModel):
+    description: str
