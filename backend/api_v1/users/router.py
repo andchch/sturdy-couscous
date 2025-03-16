@@ -132,7 +132,7 @@ async def get_user(user_id: int):
     return response
 
 
-@user_router.patch('/change-credits', response_model=StatusResponse)
+@user_router.patch('/credits', response_model=StatusResponse)
 async def change_users_creds(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateCreditsRequest):
     new_credits = {}
@@ -173,7 +173,7 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
 #         return {'status': 'password has been changed'}
 
 
-@user_router.patch('/update-contacts', response_model=StatusResponse)
+@user_router.patch('/contacts', response_model=StatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateContactsRequest):
     updated_contacts = await UserDAO.update_contacts(current_user.id, data.model_dump())
@@ -192,7 +192,7 @@ async def update_me(current_user: Annotated[User, Depends(get_current_user)],
             'info': f'User {current_user.id} updated successfully'}
 
 
-@user_router.patch('/update-description', response_model=StatusResponse)
+@user_router.patch('/description', response_model=StatusResponse)
 async def update_description(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateDescriptionsRequest):
     await UserDAO.update(current_user.id, **data.model_dump())
@@ -201,7 +201,7 @@ async def update_description(current_user: Annotated[User, Depends(get_current_u
             'info': f'User {current_user.id} updated description successfully'}
 
 
-@user_router.patch('/update-avatar', response_model=StatusResponse)
+@user_router.patch('/avatar', response_model=StatusResponse)
 async def update_avatar(current_user: Annotated[User, Depends(get_current_user)],
                         new_avatar: UploadFile | None = File(None)):
     if new_avatar.filename != '':
@@ -212,17 +212,15 @@ async def update_avatar(current_user: Annotated[User, Depends(get_current_user)]
     return {'status': True,
             'info': f'User {current_user.id} updated avatar successfully'}
 
-@user_router.get('/{user_id}/get-avatar', response_model=GetAvatarResponse)
+@user_router.get('/{user_id}/avatar', response_model=GetAvatarResponse)
 async def get_avatar(user_id: int, rediska: Annotated[RedisController, Depends(get_redis_controller)]):
-    user = await UserDAO.get_by_id(int(user_id))
+    user = await UserDAO.get_by_id(user_id)
     if user is None:
         raise user_not_exists_exception
     else:
-        if user.avatar_url is not None:
-            avatar_url = await get_cached_avatar_url(user.id, rediska, url=user.avatar_url)
-            return {'avatar_url': f'{avatar_url}'}
-        else:
-            return {'avatar_url': 'no avatar'}
+        avatar_url = await get_cached_avatar_url(user.id, rediska, url=user.avatar_url)
+        return {'avatar_url': f'{avatar_url}'}
+
 
 @user_router.post('/{user_id}/follow', response_model=OnlyStatusResponse, description='NOT TESTES')
 async def follow_user(user_id: int, current_user: User = Depends(get_current_user)):
