@@ -1,4 +1,5 @@
 from typing import Annotated
+from zoneinfo import available_timezones
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
@@ -19,7 +20,7 @@ from backend.api_v1.users.schemas import (
     UpdateCreditsRequest,
     UpdateCurrentUserRequest,
     UpdateContactsRequest,
-    UserInfoScheme, UpdateDescriptionsRequest,
+    UserInfoScheme, UpdateDescriptionsRequest, GetTimezonesResponse,
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
@@ -50,11 +51,18 @@ async def register_user(data: CreateUserRequest):
         email=data['email'],
         hashed_password=get_password_hash(data['password']),
         gender=data['gender'],
-        dob=data['dob']
+        dob=data['dob'],
+        timezone=data['timezone']
     )
     response = StatusResponse(status=True,
                               info=f'User {new_user.username} created successfully')
     return response
+
+
+@user_router.get('/timezones', response_model=GetTimezonesResponse)
+def get_timezones():
+    return {'timezones': sorted(available_timezones())}
+
 
 """
 TODO:check

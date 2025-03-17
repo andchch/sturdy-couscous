@@ -68,6 +68,7 @@ class User(Base):
     dob: Mapped[datetime | None]
     avatar_url: Mapped[str | None]
     description: Mapped[str | None]
+    timezone: Mapped[str | None]
     
     preferred_genres: Mapped[list[Genre]] = relationship(
         secondary=user_genre_association_table

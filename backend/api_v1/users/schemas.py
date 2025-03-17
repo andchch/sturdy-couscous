@@ -1,5 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel
+from zoneinfo import available_timezones
+
+from pydantic import BaseModel, validator, field_validator
 
 from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum
 
@@ -53,6 +55,17 @@ class CreateUserRequest(BaseModel):
     dob: datetime
     gender: GenderEnum
     timezone: str
+
+    @field_validator('timezone')
+    @classmethod
+    def validate_timezone(cls, v):
+        if v not in available_timezones():
+            raise ValueError('Invalid timezone')
+        return v
+
+
+class GetTimezonesResponse(BaseModel):
+    timezones: list[str]
 
 
 class UpdateContactsRequest(BaseModel):
