@@ -89,6 +89,11 @@ async def create_ugm(hour: int):
 
 @user_router.get('/me', response_model=GetMeResponse)
 async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    if not current_user.avatar_url:
+        avata = 'no avatar'
+    else:
+        avata = current_user.avatar_url
+        
     if current_user.contacts:
         user_contacts = current_user.contacts
         user_contacts = ContactsSchema(vk=user_contacts.vk,
@@ -112,7 +117,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                              registration_time=current_user.created_at,
                              gender=current_user.gender,
                              dob=current_user.dob,
-                             avatar_url=current_user.avatar_url,
+                             avatar_url=avata,
                              contacts=user_contacts,
                              info=user_info)
     return response
