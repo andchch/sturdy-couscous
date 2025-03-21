@@ -24,7 +24,8 @@ from backend.api_v1.users.schemas import (
     UserInfoScheme, 
     UpdateDescriptionsRequest, 
     GetTimezonesResponse,
-    GetFollowingsResponse
+    GetFollowingsResponse,
+    GetAllUsersResponse
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
@@ -88,9 +89,9 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
 
     if current_user.info:
         user_info = current_user.info
-        user_info = UserInfoScheme(purpose=user_info.purpose,
+        user_info = UserInfoScheme(purpose=user_info.purpose[0],
                                    preferred_communication=user_info.preferred_communication,
-                                   hours_per_week=user_info.hours_per_week)
+                                   )
     else:
         user_info = None
 
@@ -276,5 +277,17 @@ async def get_followings(user_id: int):
         for follow in u_followings:
             ret['users'].append({'id': follow.followed.id,
                                 'username': follow.followed.username})
+    
+    return ret
+
+@user_router.get('/', response_model=GetAllUsersResponse)
+async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
+    ret = {'users': []}
+    users = await UserDAO.find_all()
+    for user in users:
+        add = {'id': user.id,
+               'username': user.username,
+               'avatar_url': await get_cached_avatar_url(user.id, rediska)}
+        ret['users'].append(add)
     
     return ret

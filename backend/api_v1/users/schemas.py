@@ -18,9 +18,8 @@ class ContactsSchema(BaseModel):
 
     
 class UserInfoScheme(BaseModel):
-    purpose: PurposeEnum | None
+    purpose: str | None
     preferred_communication: str | None
-    hours_per_week: int | None
 
 
 class GetMeResponse(BaseModel):
@@ -171,3 +170,11 @@ class UsersShort(BaseModel):
     
 class GetFollowingsResponse(BaseModel):
     users: list[UsersShort]
+    
+class ShortUser(BaseModel):
+    id: int
+    username: str
+    avatar_url: str
+    
+class GetAllUsersResponse(BaseModel):
+    users: list[ShortUser]
