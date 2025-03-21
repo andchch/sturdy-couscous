@@ -46,7 +46,9 @@ S3_MEDIA_BUCKET='user.media'
                   description="Register a new user\n\n'gender' может быть только: 'MALE' или 'FEMALE'")
 async def register_user(data: CreateUserRequest):
     data = data.model_dump()
-    pot_user = await UserDAO.find_all(username=data['username'], email=data['email'])
+    pot_user = await UserDAO.find_all(email=data['email'])
+    if not pot_user:
+        pot_user = await UserDAO.find_all(username=data['username'])
     if pot_user:
         raise user_exists_exception
     
@@ -66,29 +68,6 @@ async def register_user(data: CreateUserRequest):
 @user_router.get('/timezones', response_model=GetTimezonesResponse)
 def get_timezones():
     return {'timezones': sorted(available_timezones())}
-
-
-"""
-TODO:check
-@user_router.post('/create_user_interaction')
-async def create_user_interaction(u_id1: int, u_id2: int, game: str, u_rating1: str, u_rating2: str):
-    try:
-        new_user_int = await UserInteractionDAO.create_interaction(
-            u_id1, u_id2, game, u_rating1, u_rating2
-        )
-        return {'status': 'good'}
-    except Exception as e:
-        return {'status': str(e)}
-
-
-@user_router.post('/create/ugm')
-async def create_ugm(hour: int):
-    game = MinecraftModel(hours_played=hour)
-    ugm = UserGamesModel(user_id=1, games=[game])
-    mongo = MongoController()
-    print(ugm.model_dump())
-    await mongo.add_user_games(ugm)
-"""
 
 
 @user_router.get('/me', response_model=GetMeResponse)
@@ -165,27 +144,6 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
             'info' : f'User {updated_user.id} has been updated.'}
 
 
-# @user_router.get('/', response_model=GetAllUsersResponse)
-# async def get_all_users(rediska: Annotated[RedisController, Depends(get_redis_controller)]):
-#     ret = {'users': []}
-#     users = await UserDAO.find_all()
-#     for user in users:
-#         add = {'id': user.id,
-#                'username': user.username,
-#                'avatar_url': await get_cached_avatar_url(user.id, rediska)}
-#         ret['users'].append(add)
-#
-#     return ret
-
-# @user_router.patch('/{user_id}/change-password', response_model=OnlyStatusResponse)
-# async def change_password(user_id: int, new_password: str = Form(...)):
-#     user = await UserDAO.get_by_id(user_id)
-#     if user is None:
-#         raise user_not_exists_exception
-#     else:
-#         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
-#         return {'status': 'password has been changed'}
-
 @user_router.post('/survey')
 async def create_survey(current_user: Annotated[User, Depends(get_current_user)],
                         data: CreateSurveyRequest):
@@ -193,6 +151,7 @@ async def create_survey(current_user: Annotated[User, Depends(get_current_user)]
     await UserDAO.create_survey(current_user.id, data.model_dump())
     return {'status': True,
             'info': f'Survey for user {current_user.id} created successfully'}
+    
     
 @user_router.patch('/change_password', response_model=StatusResponse)
 async def change_password(current_user: Annotated[User, Depends(get_current_user)],
@@ -209,7 +168,15 @@ async def change_password(current_user: Annotated[User, Depends(get_current_user
 @user_router.patch('/contacts', response_model=StatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
                              data: UpdateContactsRequest):
-    updated_contacts = await UserDAO.update_contacts(current_user.id, data.model_dump())
+    new_contacts = {}
+    if data.telegram:
+        new_contacts['telegram'] = data.telegram
+    if data.steam:
+        new_contacts['steam'] = data.steam
+    if data.discord:
+        new_contacts['discord'] = data.discord
+        
+    updated_contacts = await UserDAO.update_contacts(current_user.id, **new_contacts)
     if updated_contacts is None:
         raise user_not_exists_exception
 
@@ -247,6 +214,7 @@ async def update_avatar(current_user: Annotated[User, Depends(get_current_user)]
     return {'status': True,
             'info': f'User {current_user.id} updated avatar successfully'}
 
+
 @user_router.get('/{user_id}/avatar', response_model=GetAvatarResponse)
 async def get_avatar(user_id: int, rediska: Annotated[RedisController, Depends(get_redis_controller)]):
     user = await UserDAO.get_by_id(user_id)
@@ -273,6 +241,7 @@ async def follow_user(user_id: int, current_user: User = Depends(get_current_use
     
     return {'status': 'Подписка успешна'}
 
+
 @user_router.delete('/{user_id}/unfollow', response_model=OnlyStatusResponse, description='NOT TESTES')
 async def unfollow_user(user_id: int, current_user: User = Depends(get_current_user)):
     is_followed = await UserFollowDAO.check_follow(current_user.id, user_id)
@@ -282,6 +251,7 @@ async def unfollow_user(user_id: int, current_user: User = Depends(get_current_u
     else:
         await UserFollowDAO.unfollow(current_user.id, user_id)
         return {'status': 'Вы отписались'}
+
 
 # TODO: Проверить эндпоинты, связанные с подпиской и их схемы
 @user_router.get('/{user_id}/followers', response_model=GetFollowersResponse, description='NOT TESTES')

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Dict
 from dataclasses import dataclass
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -115,16 +116,24 @@ class RecommendationSystem:
         if not user1.timezone or not user2.timezone:
             return 0.0
             
-        # Получаем разницу в часах между часовыми поясами
-        tz1 = int(user1.timezone.split(':')[0])
-        tz2 = int(user2.timezone.split(':')[0])
-        tz_diff = abs(tz1 - tz2)
-        
-        # Максимальная разница - 12 часов
-        if tz_diff > 6:
-            return 0.0
+        try:
+            # Получаем текущее время в обоих часовых поясах
+            now = datetime.now(ZoneInfo('UTC'))
+            time1 = now.astimezone(ZoneInfo(user1.timezone))
+            time2 = now.astimezone(ZoneInfo(user2.timezone))
             
-        return 1.0 - (tz_diff / 12)
+            # Получаем разницу в часах
+            hour_diff = abs(time1.hour - time2.hour)
+            
+            # Если разница больше 12 часов, значит есть более короткий путь через смену дня
+            if hour_diff > 12:
+                hour_diff = 24 - hour_diff
+            
+            # Максимальная разница - 12 часов
+            return 1.0 - (hour_diff / 12)
+        except Exception:
+            # В случае ошибки (например, неверный формат часового пояса)
+            return 0.0
     
     async def _calculate_genre_compatibility(self, user1: User, user2: User) -> float:
         """Рассчитывает совместимость по жанрам"""
