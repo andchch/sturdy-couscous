@@ -44,7 +44,7 @@ class GetUserResponse(BaseModel):
     contacts: ContactsSchema | None
 
 
-class UpdateCurrentUserRequest(UserInfoScheme):
+class UpdateCurrentUserRequest(BaseModel):
     gender: GenderEnum | None
 
 
