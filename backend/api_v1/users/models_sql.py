@@ -28,7 +28,6 @@ class UserFollow(Base):
     
 class UserContact(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
-    vk: Mapped[str | None]
     telegram: Mapped[str | None]
     steam: Mapped[str | None]
     discord: Mapped[str | None]

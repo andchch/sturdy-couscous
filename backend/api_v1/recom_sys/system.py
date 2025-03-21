@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from backend.api_v1.users.models_sql import User, UserInfo, GamePlaytime
 
@@ -18,10 +19,18 @@ class RecommendationSystem:
     def __init__(self, db: AsyncSession):
         self.db = db
         
-    async def get_recommendations(self, user: User, limit: int = 10) -> List[Dict]:
+    async def get_recommendations(self, user: User, limit: int = 5) -> List[Dict]:
         """Получает рекомендации для пользователя"""
-        # Получаем всех пользователей, исключая текущего
-        stmt = select(User).where(User.id != user.id)
+        # Получаем всех пользователей со всеми необходимыми связями
+        stmt = (
+            select(User)
+            .where(User.id != user.id)
+            .options(
+                selectinload(User.preferred_genres),
+                selectinload(User.game_playtimes),
+                selectinload(User.info)
+            )
+        )
         result = await self.db.execute(stmt)
         all_users = result.scalars().all()
         
@@ -112,7 +121,7 @@ class RecommendationSystem:
         tz_diff = abs(tz1 - tz2)
         
         # Максимальная разница - 12 часов
-        if tz_diff > 12:
+        if tz_diff > 6:
             return 0.0
             
         return 1.0 - (tz_diff / 12)

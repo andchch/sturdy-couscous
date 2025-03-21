@@ -9,7 +9,7 @@ from backend.api_v1.auth.router import auth_router
 # from backend.api_v1.recommendation_system.router import rs_router
 from backend.api_v1.external_integration.router import ext_integration_router
 from backend.api_v1.games.router import game_router
-from backend.api_v1.recom_sys.recommendation_router import recommendation_router
+from backend.api_v1.recom_sys.router import recommendation_router
 
 
 # TODO: Set up CORS

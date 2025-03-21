@@ -12,7 +12,6 @@ class StatusResponse(BaseModel):
 
 
 class ContactsSchema(BaseModel):
-    vk: str | None
     telegram: str | None
     steam: str | None
     discord: str | None
@@ -69,7 +68,6 @@ class GetTimezonesResponse(BaseModel):
 
 
 class UpdateContactsRequest(BaseModel):
-    vk: str | None
     telegram: str | None
     steam: str | None
     discord: str | None
