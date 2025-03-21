@@ -105,10 +105,10 @@ class UpdateDescriptionsRequest(BaseModel):
 
 class CreateSurveyRequest(BaseModel):
     genres: list[str]
-    purpose: PurposeEnum
+    purpose: str
     preferred_communication: str
-    preferred_days: list[str]
-    preferred_time: list[str]
+    preferred_days: str
+    preferred_time: str
     favorite_games: list[str]
     
     
@@ -164,3 +164,10 @@ class RatingImpactResponse(BaseModel):
 class TopRatedUserResponse(BaseModel):
     user: Dict[str, str]
     rating: float
+
+class UsersShort(BaseModel):
+    id: int
+    username: str
+    
+class GetFollowingsResponse(BaseModel):
+    users: list[UsersShort]

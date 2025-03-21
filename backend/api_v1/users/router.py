@@ -23,7 +23,8 @@ from backend.api_v1.users.schemas import (
     UpdateContactsRequest,
     UserInfoScheme, 
     UpdateDescriptionsRequest, 
-    GetTimezonesResponse
+    GetTimezonesResponse,
+    GetFollowingsResponse
 )
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
@@ -263,5 +264,17 @@ async def get_followers(user_id: int):
     for follow in u_followings:
         ret['users'].append({'id': follow.follower.id,
                              'username': follow.follower.username})
+    
+    return ret
+
+@user_router.get('/{user_id}/following', response_model=GetFollowingsResponse)
+async def get_followings(user_id: int):
+    u_followings = await UserFollowDAO.find_follows(user_id=user_id)
+    
+    ret = {'users': []}
+    if u_followings != []:
+        for follow in u_followings:
+            ret['users'].append({'id': follow.followed.id,
+                                'username': follow.followed.username})
     
     return ret
