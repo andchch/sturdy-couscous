@@ -28,6 +28,7 @@ class UserFollow(Base):
     
 class UserContact(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
+    
     telegram: Mapped[str | None]
     steam: Mapped[str | None]
     discord: Mapped[str | None]
@@ -61,10 +62,10 @@ class GamePlaytime(Base):
 class UserInfo(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
     
-    purpose: Mapped[PurposeEnum | None]
-    preferred_communication: Mapped[CommunicationTypeEnum | None]
-    preferred_days: Mapped[PreferredDaysEnum | None]
-    preferred_time: Mapped[PreferredTimeEnum | None]
+    purpose: Mapped[str | None]
+    preferred_communication: Mapped[str | None]
+    preferred_days: Mapped[str | None]
+    preferred_time: Mapped[str | None]
     
     user: Mapped['User'] = relationship('User', back_populates='info')
     

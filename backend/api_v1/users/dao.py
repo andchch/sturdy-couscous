@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.api_v1.external_integration.models_sql import SteamProfile
 from backend.core.dao import BaseDAO
-from backend.api_v1.users.models_sql import User, UserContact, UserFollow, UserInfo, UserWeight#, UserInteraction
+from backend.api_v1.users.models_sql import User, UserContact, UserFollow, UserInfo, UserWeight, Genre, GamePlaytime, user_genre_association_table
 from backend.core.database_sql import async_session
 
 class UserDAO(BaseDAO[User]):
@@ -76,12 +76,16 @@ class UserDAO(BaseDAO[User]):
             stmt = select(cls.model).options(joinedload(User.contacts)).where(User.id == user_id)
             result = await session.execute(stmt)
             user = result.scalars().first()
+            print(data)
             if not user:
                 return None
-
             if user.contacts:
-                for key, val in data.items():
-                    setattr(user.contacts, key, val)
+                if 'telegram' in data.keys():
+                    user.contacts.telegram = data['telegram']
+                if 'steam' in data.keys():
+                    user.contacts.steam = data['steam']
+                if 'discord' in data.keys():
+                    user.contacts.discord = data['discord']
             else:
                 user.contacts = UserContact(**data)
 
@@ -141,52 +145,80 @@ class UserDAO(BaseDAO[User]):
             await session.commit()
             return user.weights
     
-    # @classmethod
-    # async def create_survey(cls, user_id: int, data: dict) -> Optional[UserSurvey]:
-    #     async with async_session() as session:
-    #         survey = UserSurvey(user_id=user_id, **data)
-    #         session.add(survey)
-    #         await session.commit()
+    @classmethod
+    async def create_survey(cls, user_id: int, data: dict) -> Optional[UserInfo]:
+        async with async_session() as session:
+            print(data)
+            # Получаем и валидируем данные
+            genres = data.get('genres', [])
+            print(genres)
+            purpose = data['purpose']
+            print(purpose)
+            interaction = data['preferred_communication']
+            print(interaction)
+            days_playing = data.get('preferred_days')[0]
+            print(days_playing)
+            time_playing = data.get('preferred_time')[0]
+            print(time_playing)
+            favorite_games = data.get('favorite_games', [])
+            print(favorite_games)
 
-# class UserInteractionDAO(BaseDAO[UserInteraction]):
-#     model = UserInteraction
-#
-#     @classmethod
-#     async def get_all_user_interactions(cls, user_id: int) -> list[UserInteraction] | None:
-#         async with async_session() as session:
-#             query = select(cls.model).where(
-#                 (cls.model.user_1_id == user_id) |
-#                 (cls.model.user_2_id == user_id)
-#             )
-#             result = await session.execute(query)
-#             return result.scalars().all()
-#
-#     @classmethod
-#     async def get_user_interactions(cls, user_id: int, game: str) -> list[UserInteraction] | None:
-#         async with async_session() as session:
-#             query = select(cls.model).where(
-#                 (cls.model.user_1_id == user_id) |
-#                 (cls.model.user_2_id == user_id)
-#             ).filter(game=game)
-#             result = await session.execute(query)
-#             return result.scalars().all()
-#
-#     @classmethod
-#     async def create_interaction(
-#         cls,
-#         user_1_id: int,
-#         user_2_id: int,
-#         game: str,
-#         user_1_rating: int,
-#         user_2_rating: int
-#     ) -> UserInteraction:
-#         return await cls.create(
-#             user_1_id=user_1_id,
-#             user_2_id=user_2_id,
-#             game=game,
-#             user_1_rating=user_1_rating,
-#             user_2_rating=user_2_rating
-#         )
+            # Проверяем обязательные поля
+            if not all([purpose, interaction, days_playing, time_playing]):
+                raise ValueError('Missing required fields in survey data')
+
+            # Создаем объект UserInfo
+            user_info = UserInfo(
+                user_id=user_id,
+                purpose=purpose,
+                preferred_communication=interaction,
+                preferred_days=days_playing,
+                preferred_time=time_playing
+            )
+            session.add(user_info)
+
+            # Получаем пользователя
+            user = await session.get(User, user_id)
+            if not user:
+                raise ValueError(f'User with id {user_id} not found')
+
+            # Обрабатываем жанры
+            for genre_name in genres:
+                try:
+                    # Проверяем, существует ли уже такой жанр
+                    genre_query = select(Genre).where(Genre.name == genre_name)
+                    genre_result = await session.execute(genre_query)
+                    genre = genre_result.scalar_one_or_none()
+
+                    if not genre:
+                        # Если жанр не существует, создаем новый
+                        genre = Genre(name=genre_name)
+                        session.add(genre)
+                        await session.flush()  # Получаем id нового жанра
+
+                    # Добавляем связь через прямую вставку в таблицу ассоциаций
+                    await session.execute(
+                        user_genre_association_table.insert().values(
+                            user_id=user_id,
+                            genre_id=genre.id
+                        )
+                    )
+
+                except ValueError:
+                    continue
+
+            # Обрабатываем любимые игры
+            for game_name in favorite_games:
+                game_playtime = GamePlaytime(
+                    user_id=user_id,
+                    game_name=game_name,
+                    playtime_hours=0  # По умолчанию 0 часов
+                )
+                session.add(game_playtime)
+
+            await session.commit()
+            return user_info
+
         
 class UserFollowDAO(BaseDAO[UserFollow]):
     model = UserFollow
@@ -244,7 +276,7 @@ class UserFollowDAO(BaseDAO[UserFollow]):
                 )
             await session.commit()
 
-class UserWeightsDAO(BaseDAO[UserFollow]):
+class UserWeightsDAO(BaseDAO[UserWeight]):
     model = UserWeight
     
     @classmethod

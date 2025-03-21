@@ -3,7 +3,7 @@ from zoneinfo import available_timezones
 from typing import List, Optional, Dict
 from pydantic import BaseModel, field_validator
 
-from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, PreferredDaysEnum, PreferredTimeEnum, RatingEnum
+from backend.api_v1.users.enums import GenderEnum, PurposeEnum, RatingEnum
 
 
 class StatusResponse(BaseModel):
@@ -106,9 +106,9 @@ class UpdateDescriptionsRequest(BaseModel):
 class CreateSurveyRequest(BaseModel):
     genres: list[str]
     purpose: PurposeEnum
-    preferred_communication: CommunicationTypeEnum
-    preferred_days: list[PreferredDaysEnum]
-    preferred_time: list[PreferredTimeEnum]
+    preferred_communication: str
+    preferred_days: list[str]
+    preferred_time: list[str]
     favorite_games: list[str]
     
     

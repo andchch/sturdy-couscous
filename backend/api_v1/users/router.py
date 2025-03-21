@@ -176,7 +176,7 @@ async def update_me_contacts(current_user: Annotated[User, Depends(get_current_u
     if data.discord:
         new_contacts['discord'] = data.discord
         
-    updated_contacts = await UserDAO.update_contacts(current_user.id, **new_contacts)
+    updated_contacts = await UserDAO.update_contacts(current_user.id, new_contacts)
     if updated_contacts is None:
         raise user_not_exists_exception
 
