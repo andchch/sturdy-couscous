@@ -89,7 +89,7 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
 
     if current_user.info:
         user_info = current_user.info
-        user_info = UserInfoScheme(purpose=user_info.purpose[0],
+        user_info = UserInfoScheme(purpose=user_info.purpose,
                                    preferred_communication=user_info.preferred_communication,
                                    )
     else:
