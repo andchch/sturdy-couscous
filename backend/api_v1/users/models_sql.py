@@ -2,8 +2,7 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from backend.api_v1.users.enums import CommunicationTypeEnum, GenderEnum, PurposeEnum, PreferredDaysEnum, PreferredTimeEnum, RatingEnum
-from backend.api_v1.games.enums import GenreEnum
+from backend.api_v1.users.enums import GenderEnum, RatingEnum
 from backend.core.database_sql import Base, unique_str, idx_str, weight
 from backend.api_v1.external_integration.models_sql import SteamProfile
 
@@ -14,7 +13,7 @@ user_genre_association_table = Table(
     Column('genre_id', ForeignKey('genres.id'), nullable=False))
 
 class Genre(Base):
-    name: Mapped[GenreEnum]
+    name: Mapped[str]
 
 class UserFollow(Base):
     id = None

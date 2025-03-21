@@ -2,7 +2,7 @@ from sqladmin import Admin, ModelView
 
 from backend.core.database_sql import async_engine
 
-from backend.api_v1.users.models_sql import Genre, User, UserContact, UserFollow, UserInfo, UserWeight
+from backend.api_v1.users.models_sql import Genre, User, UserContact, UserFollow, UserInfo, UserWeight, user_genre_association_table
 from backend.api_v1.external_integration.models_sql import SteamProfile
 
 

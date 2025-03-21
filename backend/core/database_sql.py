@@ -10,6 +10,7 @@ from backend.core.config import get_db_uri
 # from core.config import get_db_uri # for alembic
 
 DATABASE_URI = get_db_uri()
+DATABASE_URI = 'sqlite+aiosqlite:///db.sqlite'
 
 async_engine = create_async_engine(url=DATABASE_URI)
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)

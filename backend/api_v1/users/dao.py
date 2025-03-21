@@ -148,39 +148,46 @@ class UserDAO(BaseDAO[User]):
     @classmethod
     async def create_survey(cls, user_id: int, data: dict) -> Optional[UserInfo]:
         async with async_session() as session:
-            print(data)
             # Получаем и валидируем данные
             genres = data.get('genres', [])
-            print(genres)
             purpose = data['purpose']
-            print(purpose)
             interaction = data['preferred_communication']
-            print(interaction)
             days_playing = data.get('preferred_days')[0]
-            print(days_playing)
             time_playing = data.get('preferred_time')[0]
-            print(time_playing)
             favorite_games = data.get('favorite_games', [])
-            print(favorite_games)
 
             # Проверяем обязательные поля
             if not all([purpose, interaction, days_playing, time_playing]):
                 raise ValueError('Missing required fields in survey data')
 
-            # Создаем объект UserInfo
-            user_info = UserInfo(
-                user_id=user_id,
-                purpose=purpose,
-                preferred_communication=interaction,
-                preferred_days=days_playing,
-                preferred_time=time_playing
-            )
-            session.add(user_info)
-
-            # Получаем пользователя
-            user = await session.get(User, user_id)
+            # Получаем пользователя со всей информацией
+            user = await session.get(User, user_id, options=[joinedload(User.info)])
             if not user:
                 raise ValueError(f'User with id {user_id} not found')
+
+            # Обновляем или создаем UserInfo
+            if user.info:
+                user.info.purpose = purpose
+                user.info.preferred_communication = interaction
+                user.info.preferred_days = days_playing
+                user.info.preferred_time = time_playing
+                user_info = user.info
+            else:
+                user_info = UserInfo(
+                    user_id=user_id,
+                    purpose=purpose,
+                    preferred_communication=interaction,
+                    preferred_days=days_playing,
+                    preferred_time=time_playing
+                )
+                session.add(user_info)
+
+            # Удаляем старые связи с жанрами
+            await session.execute(
+                delete(user_genre_association_table).where(
+                    user_genre_association_table.c.user_id == user_id
+                )
+            )
 
             # Обрабатываем жанры
             for genre_name in genres:
@@ -194,7 +201,7 @@ class UserDAO(BaseDAO[User]):
                         # Если жанр не существует, создаем новый
                         genre = Genre(name=genre_name)
                         session.add(genre)
-                        await session.flush()  # Получаем id нового жанра
+                        await session.flush()
 
                     # Добавляем связь через прямую вставку в таблицу ассоциаций
                     await session.execute(
@@ -203,16 +210,20 @@ class UserDAO(BaseDAO[User]):
                             genre_id=genre.id
                         )
                     )
-
                 except ValueError:
                     continue
+
+            # Удаляем старые записи об играх
+            await session.execute(
+                delete(GamePlaytime).where(GamePlaytime.user_id == user_id)
+            )
 
             # Обрабатываем любимые игры
             for game_name in favorite_games:
                 game_playtime = GamePlaytime(
                     user_id=user_id,
                     game_name=game_name,
-                    playtime_hours=0  # По умолчанию 0 часов
+                    playtime_hours=0
                 )
                 session.add(game_playtime)
 

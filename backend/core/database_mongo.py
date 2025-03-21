@@ -9,6 +9,8 @@ class MongoController:
     def __init__(self):
         MONGO_URI = get_mongo_uri()
         MONGO_DB = get_mongo_db()
+        MONGO_URI = 'mongodb://root:example@localhost:27017'
+        MONGO_DB = 'STEAM'
         
         self.client = AsyncIOMotorClient(MONGO_URI)
         self.db = self.client[MONGO_DB]
