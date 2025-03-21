@@ -1,4 +1,5 @@
 import enum
+from enum import Enum
 
 
 class GenderEnum(enum.StrEnum):
@@ -22,4 +23,21 @@ class WeekdayEnum(enum.StrEnum):
     FRIDAY = 'Пятница'
     SATURDAY = 'Суббота'
     SUNDAY = 'Воскресенье'
+    
+class PreferredDaysEnum(str, Enum):
+    WEEKDAYS = 'weekdays'
+    WEEKENDS = 'weekends'
+
+class PreferredTimeEnum(str, Enum):
+    MORNING = 'morning'
+    AFTERNOON = 'afternoon'
+    EVENING = 'evening'
+    NIGHT = 'night'
+    
+class RatingEnum(str, Enum):
+    ONE_STAR = '1'
+    TWO_STARS = '2'
+    THREE_STARS = '3'
+    FOUR_STARS = '4'
+    FIVE_STARS = '5'
     

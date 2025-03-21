@@ -140,6 +140,13 @@ class UserDAO(BaseDAO[User]):
                 user.weights = UserWeight(**data)
             await session.commit()
             return user.weights
+    
+    @classmethod
+    async def create_survey(cls, user_id: int, data: dict) -> Optional[UserSurvey]:
+        async with async_session() as session:
+            survey = UserSurvey(user_id=user_id, **data)
+            session.add(survey)
+            await session.commit()
 
 # class UserInteractionDAO(BaseDAO[UserInteraction]):
 #     model = UserInteraction

@@ -2,9 +2,9 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from backend.api_v1.users.enums import CommunicationTypeEnum, GenderEnum, PurposeEnum
+from backend.api_v1.users.enums import CommunicationTypeEnum, GenderEnum, PurposeEnum, PreferredDaysEnum, PreferredTimeEnum, RatingEnum
 from backend.api_v1.games.enums import GenreEnum
-from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight
+from backend.core.database_sql import Base, unique_str, idx_str, weight
 from backend.api_v1.external_integration.models_sql import SteamProfile
 
 user_genre_association_table = Table(
@@ -50,15 +50,40 @@ class UserWeight(Base):
     
     user: Mapped['User'] = relationship('User', back_populates='weights')
     
+class GamePlaytime(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    game_name: Mapped[str]
+    playtime_hours: Mapped[float]
+    
+    user: Mapped['User'] = relationship('User', back_populates='game_playtimes')
+    
+    __table_args__ = (UniqueConstraint('user_id', 'game_name', name='uq_user_game_playtime'),)
+
 class UserInfo(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
     
     purpose: Mapped[PurposeEnum | None]
     preferred_communication: Mapped[CommunicationTypeEnum | None]
-    hours_per_week: Mapped[int | None]
+    preferred_days: Mapped[PreferredDaysEnum | None]
+    preferred_time: Mapped[PreferredTimeEnum | None]
     
     user: Mapped['User'] = relationship('User', back_populates='info')
     
+class UserRating(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rater_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    rated_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    rating: Mapped[RatingEnum]
+    comment: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    
+    rater: Mapped['User'] = relationship('User', foreign_keys=[rater_id], back_populates='ratings_given')
+    rated: Mapped['User'] = relationship('User', foreign_keys=[rated_id], back_populates='ratings_received')
+    
+    __table_args__ = (
+        UniqueConstraint('rater_id', 'rated_id', name='uq_user_rating'),
+    )
+
 class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
@@ -102,6 +127,21 @@ class User(Base):
     followers: Mapped[list['UserFollow']] = relationship(
         'UserFollow', foreign_keys=[UserFollow.followed_id],
         back_populates='followed', cascade='all, delete-orphan'
+    )
+    
+    game_playtimes: Mapped[list['GamePlaytime']] = relationship(
+        'GamePlaytime', back_populates='user',
+        cascade='all, delete-orphan'
+    )
+    
+    ratings_given: Mapped[list['UserRating']] = relationship(
+        'UserRating', foreign_keys=[UserRating.rater_id],
+        back_populates='rater', cascade='all, delete-orphan'
+    )
+    
+    ratings_received: Mapped[list['UserRating']] = relationship(
+        'UserRating', foreign_keys=[UserRating.rated_id],
+        back_populates='rated', cascade='all, delete-orphan'
     )
     
     # preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_platform_association_table)

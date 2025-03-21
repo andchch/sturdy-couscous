@@ -1,9 +1,9 @@
 from datetime import datetime
 from zoneinfo import available_timezones
 
-from pydantic import BaseModel, validator, field_validator
+from pydantic import BaseModel, field_validator
 
-from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum
+from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, PreferredDaysEnum, PreferredTimeEnum
 
 
 class StatusResponse(BaseModel):
@@ -98,9 +98,21 @@ class GetFollowingsResponse(BaseModel):
 
 class UpdateCreditsRequest(BaseModel):
     new_username: str | None
-    new_password: str | None
     new_dob: datetime | None
 
 
 class UpdateDescriptionsRequest(BaseModel):
     description: str
+
+
+class CreateSurveyRequest(BaseModel):
+    genres: list[str]
+    purpose: PurposeEnum
+    preferred_communication: CommunicationTypeEnum
+    preferred_days: list[PreferredDaysEnum]
+    preferred_time: list[PreferredTimeEnum]
+    favorite_games: list[str]
+    
+    
+class ChangePasswordRequest(BaseModel):
+    new_password: str

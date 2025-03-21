@@ -8,7 +8,9 @@ from backend.api_v1.users.dao import UserDAO, UserFollowDAO
 from backend.api_v1.users.dependencies import get_current_user
 from backend.api_v1.users.models_sql import User
 from backend.api_v1.users.schemas import (
+    ChangePasswordRequest,
     ContactsSchema,
+    CreateSurveyRequest,
     CreateUserRequest,
     StatusResponse,
     GetAvatarResponse,
@@ -155,8 +157,6 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
         if user:
             raise busy_username_exception
         new_credits['username'] = data.new_username
-    if data.new_password:
-        new_credits['hashed_password'] = get_password_hash(data.new_password)
     if data.new_dob:
         new_credits['dob'] = data.new_dob
 
@@ -186,6 +186,25 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
 #         await UserDAO.update(user.id, hashed_password=get_password_hash(new_password))
 #         return {'status': 'password has been changed'}
 
+@user_router.post('/survey')
+async def create_survey(current_user: Annotated[User, Depends(get_current_user)],
+                        data: CreateSurveyRequest):
+    """Еще не готово"""
+    await UserDAO.create_survey(current_user.id, data.model_dump())
+    return {'status': True,
+            'info': f'Survey for user {current_user.id} created successfully'}
+    
+@user_router.patch('/change_password', response_model=StatusResponse)
+async def change_password(current_user: Annotated[User, Depends(get_current_user)],
+                         data: ChangePasswordRequest):
+    new_credits = {}
+    if data.new_password:
+        new_credits['hashed_password'] = get_password_hash(data.new_password)
+
+    updated_user = await UserDAO.update(current_user.id, **new_credits)
+    return {'status': True,
+            'info' : f'User password for {updated_user.id} has been updated.'}
+    
 
 @user_router.patch('/contacts', response_model=StatusResponse)
 async def update_me_contacts(current_user: Annotated[User, Depends(get_current_user)],
