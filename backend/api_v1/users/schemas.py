@@ -32,6 +32,7 @@ class GetMeResponse(BaseModel):
     avatar_url: str
     contacts: ContactsSchema | None
     info: UserInfoScheme | None
+    description: str
 
 
 class GetUserResponse(BaseModel):
@@ -96,6 +97,7 @@ class GetFollowingsResponse(BaseModel):
 class UpdateCreditsRequest(BaseModel):
     new_username: str | None
     new_dob: datetime | None
+    new_bio: str | None
 
 
 class UpdateDescriptionsRequest(BaseModel):

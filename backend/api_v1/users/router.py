@@ -103,7 +103,8 @@ async def get_me(current_user: Annotated[User, Depends(get_current_user)]):
                              dob=current_user.dob,
                              avatar_url=avata,
                              contacts=user_contacts,
-                             info=user_info)
+                             info=user_info,
+                             description=current_user.description or '')
     return response
 
 
@@ -131,7 +132,8 @@ async def get_user(user_id: int):
 
 @user_router.patch('/credits', response_model=StatusResponse)
 async def change_users_creds(current_user: Annotated[User, Depends(get_current_user)],
-                             data: UpdateCreditsRequest):
+                             data: UpdateCreditsRequest,
+                             new_avatar: UploadFile | None = File(None)):
     new_credits = {}
     if data.new_username:
         user = await UserDAO.get_by_username(data.new_username)
@@ -140,10 +142,19 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
         new_credits['username'] = data.new_username
     if data.new_dob:
         new_credits['dob'] = data.new_dob
+    if data.new_bio:
+        new_credits['description'] = data.new_bio
+    if new_avatar.filename != '':
+        file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
+        await UserDAO.update(current_user.id, avatar_url=file_url)
 
     updated_user = await UserDAO.update(current_user.id, **new_credits)
     return {'status': True,
             'info' : f'User {updated_user.id} has been updated.'}
+    
+# @user_router.get('/games')
+# async def get_games(current_user: Annotated[User, Depends(get_current_user)]):
+    
 
 
 @user_router.post('/survey')

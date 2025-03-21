@@ -29,7 +29,7 @@ async def steam_auth(request: Request, current_user: Annotated[User, Depends(get
     await UserDAO.update_steam_profile(current_user.id, user_summary)
     await steam_service.update_profile(steam_id, user_summary)
 
-    return RedirectResponse('http://87.242.103.34:8000/')
+    return RedirectResponse('http://213.171.29.113:5000/docs')
     return {'message': 'Login successful', 'steamid': steam_id}
 
 @ext_integration_router.get('/steam/{user_id}')
