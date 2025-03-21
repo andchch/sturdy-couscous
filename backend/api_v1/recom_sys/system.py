@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import List, Tuple
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo
+from functools import lru_cache
 
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
 
-from .models_sql import User, UserInfo, GamePlaytime
-from .enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, PreferredDaysEnum, PreferredTimeEnum
+from backend.api_v1.users.enums import CommunicationTypeEnum
+from backend.api_v1.users.models_sql import User, UserInfo
+
 
 @dataclass
 class UserCompatibility:
@@ -37,10 +38,11 @@ class RecommendationSystem:
         tz2 = ZoneInfo(user2.timezone)
         return abs(tz1.utcoffset(datetime.now()) - tz2.utcoffset(datetime.now())).total_seconds() / 3600
     
-    def _calculate_genre_similarity(self, user1: User, user2: User) -> float:
+    @lru_cache(maxsize=1000)
+    def _calculate_genre_similarity(self, user1_id: int, user2_id: int) -> float:
         """Рассчитывает схожесть по жанрам"""
-        genres1 = set(genre.name for genre in user1.preferred_genres)
-        genres2 = set(genre.name for genre in user2.preferred_genres)
+        genres1 = set(genre.name for genre in self.db.query(UserInfo).filter(UserInfo.user_id == user1_id).all())
+        genres2 = set(genre.name for genre in self.db.query(UserInfo).filter(UserInfo.user_id == user2_id).all())
         
         if not genres1 or not genres2:
             return 0.0
@@ -78,27 +80,27 @@ class RecommendationSystem:
         # Проверяем совпадение по цели
         if info1.purpose and info2.purpose and info1.purpose == info2.purpose:
             score += 1.0
-            matching_factors.append("Цель игры")
+            matching_factors.append('Цель игры')
             
         # Проверяем совпадение по формату общения
         if info1.preferred_communication and info2.preferred_communication:
             if info1.preferred_communication == info2.preferred_communication:
                 score += 1.0
-                matching_factors.append("Формат общения")
+                matching_factors.append('Формат общения')
             elif info1.preferred_communication == CommunicationTypeEnum.INDIFFERENT or \
                  info2.preferred_communication == CommunicationTypeEnum.INDIFFERENT:
                 score += 0.5
-                matching_factors.append("Формат общения (один из пользователей не имеет предпочтений)")
+                matching_factors.append('Формат общения (один из пользователей не имеет предпочтений)')
                 
         # Проверяем совпадение по дням
         if info1.preferred_days and info2.preferred_days and info1.preferred_days == info2.preferred_days:
             score += 1.0
-            matching_factors.append("Предпочтительные дни")
+            matching_factors.append('Предпочтительные дни')
             
         # Проверяем совпадение по времени суток
         if info1.preferred_time and info2.preferred_time and info1.preferred_time == info2.preferred_time:
             score += 1.0
-            matching_factors.append("Предпочтительное время")
+            matching_factors.append('Предпочтительное время')
             
         # Нормализуем количество часов в неделю
         if info1.hours_per_week and info2.hours_per_week:
@@ -107,21 +109,26 @@ class RecommendationSystem:
             if max_hours > 0:
                 hours_similarity = 1 - (hours_diff / max_hours)
                 score += hours_similarity
-                matching_factors.append("Количество часов в неделю")
+                matching_factors.append('Количество часов в неделю')
                 
         return score / 4, matching_factors  # Нормализуем по максимальному количеству факторов
     
     def get_recommendations(self, user: User, limit: int = 10) -> List[UserCompatibility]:
-        """Возвращает список рекомендованных пользователей"""
-        # Получаем всех пользователей, кроме текущего
-        other_users = self.db.query(User).filter(User.id != user.id).all()
+        # Используем подзапросы для оптимизации
+        other_users = self.db.query(User).filter(
+            User.id != user.id
+        ).options(
+            joinedload(User.preferred_genres),
+            joinedload(User.game_playtimes),
+            joinedload(User.info)
+        ).all()
         
         recommendations = []
         for other_user in other_users:
             # Рассчитываем общий скор совместимости
             age_diff = self._calculate_age_difference(user, other_user)
             timezone_diff = self._calculate_timezone_difference(user, other_user)
-            genre_similarity = self._calculate_genre_similarity(user, other_user)
+            genre_similarity = self._calculate_genre_similarity(user.id, other_user.id)
             game_similarity = self._calculate_game_similarity(user, other_user)
             
             # Получаем схожесть по предпочтениям
@@ -153,3 +160,4 @@ class RecommendationSystem:
         # Сортируем по скору и возвращаем топ-N рекомендаций
         recommendations.sort(key=lambda x: x.score, reverse=True)
         return recommendations[:limit]
+    
