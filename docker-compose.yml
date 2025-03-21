@@ -1,83 +1,152 @@
+version: '3.8'
+
 services:
-#  postgres:
-#    image: postgres:latest
-#    container_name: postgres_gsn
-#    environment:
-#      POSTGRES_USER: admin
-#      POSTGRES_PASSWORD: my_super_password
-#      POSTGRES_DB: gsn
-#      PGDATA: /var/lib/postgresql/data/pgdata
-#    ports:
-#      - '5433:5432'
-#    volumes:
-#      - pgdata:/var/lib/postgresql/data/pgdata
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '0.50'
-#          memory: 512M
-#        reservations:
-#          cpus: '0.25'
-#          memory: 256M
-#    command: >
-#      postgres -c max_connections=1000
-#               -c shared_buffers=256MB
-#               -c effective_cache_size=768MB
-#               -c maintenance_work_mem=64MB
-#               -c checkpoint_completion_target=0.7
-#               -c wal_buffers=16MB
-#               -c default_statistics_target=100
-#    healthcheck:
-#      test: [ 'CMD-SHELL', 'pg_isready -U postgres_user -d postgres_db' ]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 5
-#    restart: unless-stopped
-#    tty: true
-#    stdin_open: true
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_gsn
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: >
+      postgres -c max_connections=1000
+               -c shared_buffers=256MB
+               -c effective_cache_size=768MB
+               -c maintenance_work_mem=64MB
+               -c checkpoint_completion_target=0.7
+               -c wal_buffers=16MB
+               -c default_statistics_target=100
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - gsn_network
 
   mongo:
-    image: mongo
+    image: mongo:7
     container_name: mongo_gsn
-    restart: always
+    restart: unless-stopped
     ports:
       - '27017:27017'
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - gsn_network
 
   mongo-express:
-    image: mongo-express
-    restart: always
+    image: mongo-express:latest
+    container_name: mongo_express_gsn
+    restart: unless-stopped
     ports:
-      - 8081:8081
+      - '8081:8081'
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
       ME_CONFIG_BASICAUTH: false
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - gsn_network
 
   redis:
-    image: "redis:latest"
+    image: redis:7-alpine
     container_name: redis_cache
-    restart: always
+    restart: unless-stopped
     ports:
-      - "6379:6379"
-    command: redis-server --save 60 1 --loglevel warning
+      - '6379:6379'
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    
-  redis_viewer:
-    image: marian/rebrow
-    container_name: redis_viewe
-    ports:
-    - "5001:5001"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - gsn_network
 
+  redis_viewer:
+    image: marian/rebrow:latest
+    container_name: redis_viewer_gsn
+    restart: unless-stopped
+    ports:
+      - '5001:5001'
+    environment:
+      REBROW_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - gsn_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_gsn
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gsn_network
+
+networks:
+  gsn_network:
+    driver: bridge
 
 volumes:
   pgdata:
     driver: local
   redis_data:
+    driver: local
   mongo_data:
+    driver: local
