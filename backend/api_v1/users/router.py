@@ -1,11 +1,12 @@
-from typing import Annotated
+from typing import Annotated, List
 from zoneinfo import available_timezones
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from sqlalchemy.orm import Session
 
 from backend.api_v1.auth.auth import get_password_hash
 from backend.api_v1.users.dao import UserDAO, UserFollowDAO
-from backend.api_v1.users.dependencies import get_current_user
+from backend.api_v1.users.dependencies import get_current_user, get_db
 from backend.api_v1.users.models_sql import User
 from backend.api_v1.users.schemas import (
     ChangePasswordRequest,
@@ -15,15 +16,27 @@ from backend.api_v1.users.schemas import (
     StatusResponse,
     GetAvatarResponse,
     GetFollowersResponse,
-    GetFollowingsResponse,
     GetMeResponse,
     GetUserResponse,
     OnlyStatusResponse,
     UpdateCreditsRequest,
     UpdateCurrentUserRequest,
     UpdateContactsRequest,
-    UserInfoScheme, UpdateDescriptionsRequest, GetTimezonesResponse,
+    UserInfoScheme, 
+    UpdateDescriptionsRequest, 
+    GetTimezonesResponse,
+    RecommendationResponse,
+    TopRatedRecommendationResponse,
+    RecommendationSummaryResponse,
+    RatingRequest,
+    RatingResponse,
+    RatingStatsResponse,
+    RatingTrendResponse,
+    RatingImpactResponse,
+    TopRatedUserResponse,
 )
+from backend.api_v1.recom_sys.recommendation_service import RecommendationService
+from backend.api_v1.rating_service.rating_service import RatingService
 from backend.core.database_s3 import get_cached_avatar_url, upload_file_to_s3
 from backend.redis.cache import RedisController, get_redis_controller
 
@@ -33,7 +46,8 @@ from .exceptions import (
     not_followed_exception,
     self_follow_exception,
     user_exists_exception,
-    user_not_exists_exception, avatar_file_exception,
+    user_not_exists_exception, 
+    avatar_file_exception,
 )
 
 user_router = APIRouter(prefix='/user', tags=['Users management'])

@@ -9,6 +9,7 @@ from backend.api_v1.auth.router import auth_router
 # from backend.api_v1.recommendation_system.router import rs_router
 from backend.api_v1.external_integration.router import ext_integration_router
 from backend.api_v1.games.router import game_router
+from backend.api_v1.recom_sys.recommendation_router import recommendation_router
 
 
 # TODO: Set up CORS
@@ -48,4 +49,5 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(ext_integration_router)
 app.include_router(game_router)
-# app.include_router(rs_router)
+app.include_router(recommendation_router)
+# app.include_router(rating_router)

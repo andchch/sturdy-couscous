@@ -1,9 +1,9 @@
 from datetime import datetime
 from zoneinfo import available_timezones
-
+from typing import List, Optional, Dict
 from pydantic import BaseModel, field_validator
 
-from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, PreferredDaysEnum, PreferredTimeEnum
+from backend.api_v1.users.enums import GenderEnum, PurposeEnum, CommunicationTypeEnum, PreferredDaysEnum, PreferredTimeEnum, RatingEnum
 
 
 class StatusResponse(BaseModel):
@@ -116,3 +116,53 @@ class CreateSurveyRequest(BaseModel):
     
 class ChangePasswordRequest(BaseModel):
     new_password: str
+
+
+# Рекомендации
+class RecommendationResponse(BaseModel):
+    user: Dict[str, str]
+    compatibility_score: float
+    matching_factors: List[str]
+    rating: Dict[str, float | int | Dict[str, int]]
+    recent_ratings: List[Dict[str, str | float | datetime]]
+
+class TopRatedRecommendationResponse(BaseModel):
+    user: Dict[str, str]
+    compatibility_score: float
+    matching_factors: List[str]
+    rating: Dict[str, float | int | Dict[str, int]]
+
+class RecommendationSummaryResponse(BaseModel):
+    user: Dict[str, str]
+    recommendations: List[Dict[str, str | float | List[str]]]
+    rating_summary: Dict
+    top_rated_users: List[Dict[str, str | float]]
+
+# Оценки
+class RatingRequest(BaseModel):
+    rating: RatingEnum
+    comment: Optional[str] = None
+
+class RatingResponse(BaseModel):
+    rating: str
+    comment: Optional[str]
+    from_user: str
+    date: datetime
+
+class RatingStatsResponse(BaseModel):
+    average_rating: float
+    total_ratings: int
+    rating_distribution: Dict[str, int]
+
+class RatingTrendResponse(BaseModel):
+    trend: Dict[str, float]
+
+class RatingImpactResponse(BaseModel):
+    average_rating: float
+    rating_count: int
+    rating_strength: float
+    recommendation_boost: float
+
+class TopRatedUserResponse(BaseModel):
+    user: Dict[str, str]
+    rating: float
