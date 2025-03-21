@@ -132,8 +132,7 @@ async def get_user(user_id: int):
 
 @user_router.patch('/credits', response_model=StatusResponse)
 async def change_users_creds(current_user: Annotated[User, Depends(get_current_user)],
-                             data: UpdateCreditsRequest,
-                             new_avatar: UploadFile | None = File(None)):
+                             data: UpdateCreditsRequest):
     new_credits = {}
     if data.new_username:
         user = await UserDAO.get_by_username(data.new_username)
@@ -144,9 +143,6 @@ async def change_users_creds(current_user: Annotated[User, Depends(get_current_u
         new_credits['dob'] = data.new_dob
     if data.new_bio:
         new_credits['description'] = data.new_bio
-    if new_avatar.filename != '':
-        file_url = upload_file_to_s3(new_avatar, S3_MEDIA_BUCKET)
-        await UserDAO.update(current_user.id, avatar_url=file_url)
 
     updated_user = await UserDAO.update(current_user.id, **new_credits)
     return {'status': True,
