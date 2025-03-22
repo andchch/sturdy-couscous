@@ -7,7 +7,7 @@ from backend.api_v1.external_integration.models_sql import SteamProfile
 
 
 class UserAdmin(ModelView, model=User):
-    column_list = [User.username, User.email]
+    column_list = [User.id, User.username, User.email]
     
 class SteamProfileAdmin(ModelView, model=SteamProfile):
     column_list = [SteamProfile.user_id, SteamProfile.steam_id, SteamProfile.steam_name]

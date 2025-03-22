@@ -79,6 +79,7 @@ async def get_users_games(user_id: int, steam_service: Annotated[SteamService, D
         
     game_names = [game['name'] for game in sorted_games]
     
+    res = {"games": game_names[:50]}
     return game_names[:50]
 
 @ext_integration_router.put('/steam/{user_id}/games', description='Обновляет данные из Steam')

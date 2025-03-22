@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo
 
@@ -20,20 +20,33 @@ class RecommendationSystem:
     def __init__(self, db: AsyncSession):
         self.db = db
         
-    async def get_recommendations(self, user: User, limit: int = 5) -> List[Dict]:
+    async def get_recommendations(
+        self, 
+        user: User, 
+        limit: int = 5,
+        game_filter: Optional[str] = None,
+        purpose_filter: Optional[str] = None
+    ) -> List[Dict]:
         """Получает рекомендации для пользователя"""
-        # Получаем всех пользователей со всеми необходимыми связями
-        stmt = (
-            select(User)
-            .where(User.id != user.id)
-            .options(
-                selectinload(User.preferred_genres),
-                selectinload(User.game_playtimes),
-                selectinload(User.info)
-            )
+        # Базовый запрос для получения пользователей
+        query = select(User).where(User.id != user.id)
+        
+        # Добавляем фильтры
+        if game_filter:
+            query = query.join(GamePlaytime).where(GamePlaytime.game_name == game_filter)
+        
+        if purpose_filter:
+            query = query.join(UserInfo).where(UserInfo.purpose == purpose_filter)
+        
+        # Добавляем загрузку связей
+        query = query.options(
+            selectinload(User.preferred_genres),
+            selectinload(User.game_playtimes),
+            selectinload(User.info)
         )
-        result = await self.db.execute(stmt)
-        all_users = result.scalars().all()
+        
+        result = await self.db.execute(query)
+        all_users = result.unique().scalars().all()
         
         # Рассчитываем совместимость с каждым пользователем
         recommendations = []
@@ -197,13 +210,13 @@ class RecommendationSystem:
                 score += 1.0
             factors += 1
             
-        # Проверяем совпадение часов в неделю
-        if info1.hours_per_week and info2.hours_per_week:
-            hours_diff = abs(info1.hours_per_week - info2.hours_per_week)
-            max_diff = max(info1.hours_per_week, info2.hours_per_week)
-            if max_diff > 0:
-                score += 1.0 - (hours_diff / max_diff)
-            factors += 1
+        # # Проверяем совпадение часов в неделю
+        # if info1.hours_per_week and info2.hours_per_week:
+        #     hours_diff = abs(info1.hours_per_week - info2.hours_per_week)
+        #     max_diff = max(info1.hours_per_week, info2.hours_per_week)
+        #     if max_diff > 0:
+        #         score += 1.0 - (hours_diff / max_diff)
+        #     factors += 1
             
         return score / factors if factors > 0 else 0.0
     
