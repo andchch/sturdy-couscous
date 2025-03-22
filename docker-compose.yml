@@ -13,6 +13,7 @@ services:
       - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data/pgdata
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     deploy:
       resources:
         limits:
@@ -39,48 +40,48 @@ services:
       - gsn_network
 
   mongo:
-    image: mongo:7
+    image: mongo:latest
     container_name: mongo_gsn
-    restart: unless-stopped
+    # restart: unless-stopped
     ports:
       - '27017:27017'
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+    #   MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '0.50'
+    #       memory: 512M
+    #     reservations:
+    #       cpus: '0.25'
+    #       memory: 256M
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/test --quiet
       interval: 30s
       timeout: 10s
       retries: 5
     networks:
       - gsn_network
 
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongo_express_gsn
-    restart: unless-stopped
-    ports:
-      - '8081:8081'
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
-      ME_CONFIG_BASICAUTH: false
-    depends_on:
-      mongo:
-        condition: service_healthy
-    networks:
-      - gsn_network
+  # mongo-express:
+  #   image: mongo-express:latest
+  #   container_name: mongo_express_gsn
+  #   restart: unless-stopped
+  #   ports:
+  #     - '8081:8081'
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+  #     ME_CONFIG_MONGODB_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
+  #     ME_CONFIG_BASICAUTH: false
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #   networks:
+  #     - gsn_network
 
   redis:
     image: redis:7-alpine
@@ -107,19 +108,19 @@ services:
     networks:
       - gsn_network
 
-  redis_viewer:
-    image: marian/rebrow:latest
-    container_name: redis_viewer_gsn
-    restart: unless-stopped
-    ports:
-      - '5001:5001'
-    environment:
-      REBROW_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - gsn_network
+  # redis_viewer:
+  #   image: marian/rebrow:latest
+  #   container_name: redis_viewer_gsn
+  #   restart: unless-stopped
+  #   ports:
+  #     - '5001:5001'
+  #   environment:
+  #     REBROW_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - gsn_network
 
   backend:
     build:

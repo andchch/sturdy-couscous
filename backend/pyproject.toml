@@ -106,6 +106,7 @@ sqladmin = {extras = ["full"], version = "^0.20.1"}
 tzdata = "^2025.1"
 requests = "^2.32.3"
 aiohttp = "^3.11.14"
+uvicorn = "^0.34.0"
 
 
 [build-system]

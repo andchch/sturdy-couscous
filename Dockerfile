@@ -7,7 +7,7 @@ COPY backend/pyproject.toml backend/poetry.lock ./
 # Настройка Poetry для создания виртуального окружения
 RUN poetry config virtualenvs.create false
 
-RUN poetry install --no-dev --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi
 
 FROM python:3.12-slim
 
@@ -23,18 +23,22 @@ RUN useradd -m -u 1000 appuser && \
 
 WORKDIR /app
 
-COPY backend/ backend/
+COPY ./ ./
+#COPY .env ./
 
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Проверка наличия uvicorn
+RUN pip show uvicorn || echo "Uvicorn is not installed!"
+
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/
+# RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
