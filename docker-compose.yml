@@ -128,8 +128,8 @@ services:
       dockerfile: Dockerfile
     container_name: backend_gsn
     restart: unless-stopped
-    ports:
-      - '8000:8000'
+    expose:
+      - '8000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -137,6 +137,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - gsn_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_gsn
+    restart: unless-stopped
+    expose:
+      - '80'
+    environment:
+      - REACT_APP_API_URL=/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
     networks:
       - gsn_network
 
