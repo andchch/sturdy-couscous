@@ -8,6 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from backend.api_v1.users.models_sql import User, UserInfo, GamePlaytime
+from backend.core.database_s3 import get_cached_avatar_url
+from backend.redis.cache import get_redis_controller
 
 
 @dataclass
@@ -53,11 +55,16 @@ class RecommendationSystem:
         for other_user in all_users:
             compatibility = await self.calculate_compatibility(user, other_user)
             if compatibility['total_score'] > 0:
+                if other_user.avatar_url == 'empty' or other_user.avatar_url == 'https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png':
+                    ava = 'https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png'
+                else:
+                    rediska = get_redis_controller()
+                    ava = await get_cached_avatar_url(other_user.id, rediska, other_user.avatar_url)
                 recommendations.append({
                     'user': {
                         'id': other_user.id,
                         'username': other_user.username,
-                        'avatar_url': other_user.avatar_url,
+                        'avatar_url': ava,
                         'gender': other_user.gender,
                         'dob': other_user.dob.isoformat() if other_user.dob else None
                     },

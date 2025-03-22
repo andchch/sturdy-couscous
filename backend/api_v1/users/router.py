@@ -124,8 +124,9 @@ async def get_user(user_id: int):
     response = GetUserResponse(id=user.id,
                                 username=user.username,
                                 gender=user.gender,
-                                dof=user.dob,
-                                contacts=user_contacts)
+                                dob=user.dob,
+                                contacts=user_contacts,
+                                description=user.description or '')
 
     return response
 

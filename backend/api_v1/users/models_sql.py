@@ -90,7 +90,7 @@ class User(Base):
     
     gender: Mapped[GenderEnum | None]
     dob: Mapped[datetime | None]
-    avatar_url: Mapped[str] = mapped_column(default='empty')
+    avatar_url: Mapped[str] = mapped_column(default='https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png')
     description: Mapped[str | None]
     timezone: Mapped[str | None]
     

@@ -43,10 +43,15 @@ async def get_cached_avatar_url(id: int, redis_controller: RedisController, url:
         user = await UserDAO.get_by_id(id)
         if user.avatar_url is None:
             return 'no avatar'
+        if user.avatar_url == 'empty':
+            return 'https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png'
         else:
             file_key = user.avatar_url.split('/')[-1]
     else:
+        if url == 'empty' or url == 'https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png':
+            return 'https://raw.githubusercontent.com/saveryanov/avatars/refs/heads/master/examples/username.png'
         file_key = url.split('/')[-1]
+        
     cache_key = f'presigned_avatar_url:{id}'
 
     cached_url = await redis_controller.redis.get(cache_key)
@@ -60,7 +65,7 @@ async def get_cached_avatar_url(id: int, redis_controller: RedisController, url:
         ExpiresIn=60,  # Срок действия URL (15 min)
     )
     
-    await redis_controller.redis.set(cache_key, json.dumps(presigned_url), ex=900)
+    await redis_controller.redis.set(cache_key, json.dumps(presigned_url), ex=60)
     
     return presigned_url
 

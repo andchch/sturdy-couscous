@@ -39,8 +39,9 @@ class GetUserResponse(BaseModel):
     id: int
     username: str
     gender: str | None
-    dof: datetime | None
+    dob: datetime | None
     contacts: ContactsSchema | None
+    description: str | None
 
 
 class UpdateCurrentUserRequest(BaseModel):

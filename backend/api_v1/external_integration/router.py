@@ -25,12 +25,24 @@ async def steam_auth(request: Request, current_user: Annotated[User, Depends(get
         raise auth_failed
 
     steam_id = params['openid.claimed_id'].split('/')[-1]
+    
     user_summary = await fetch_steam_profile(steam_id)
     await UserDAO.update_steam_profile(current_user.id, user_summary)
     await steam_service.update_profile(steam_id, user_summary)
+    
+    profile_data = await fetch_steam_profile(steam_id)
+    profile_data.update({'user_id': current_user.id})
+    games_data = await fetch_owned_games(steam_id)
+    games_data.update({'user_id': current_user.id})
+    friends_data = await fetch_friends(steam_id)
+    friends_data.update({'user_id': current_user.id})
+
+    await steam_service.update_games(steam_id, games_data)
+    await steam_service.update_friends(steam_id, friends_data)
+    await steam_service.update_profile(steam_id, profile_data)
 
     return RedirectResponse('http://213.171.29.113:5000/docs')
-    return {'message': 'Login successful', 'steamid': steam_id}
+    #return {'message': 'Login successful', 'steamid': steam_id}
 
 @ext_integration_router.get('/steam/{user_id}')
 async def get_steam_profile(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):
