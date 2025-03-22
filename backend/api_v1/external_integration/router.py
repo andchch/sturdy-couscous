@@ -29,7 +29,7 @@ async def steam_auth(request: Request, current_user: Annotated[User, Depends(get
     await UserDAO.update_steam_profile(current_user.id, user_summary)
     await steam_service.update_profile(steam_id, user_summary)
 
-    return RedirectResponse('http://87.242.103.34:8000/')
+    return RedirectResponse('http://213.171.29.113:5000/docs')
     return {'message': 'Login successful', 'steamid': steam_id}
 
 @ext_integration_router.get('/steam/{user_id}')
@@ -62,13 +62,25 @@ async def refresh_steam_data(user_id: int, steam_service: Annotated[SteamService
 
     return {'status': 'updated'}
 
-@ext_integration_router.get('/steam/{user_id}/games', description='Возвращает данные из локальных бд', response_model=GetGamesResponse)
+@ext_integration_router.get('/steam/{user_id}/games', description='Возвращает данные из локальных бд')#, response_model=GetGamesResponse)
 async def get_users_games(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):
     steam_profile = await SteamProfileDAO.get_by_user_id(user_id)
     if not steam_profile:
         raise no_profile_exception
+    steam_id = steam_profile.steam_id
+    
     data = await steam_service.get_games(steam_profile.steam_id)
-    return data
+    
+    sorted_games = sorted(
+        data['response']['games'],
+        key=lambda x: x.get('playtime_forever', 0),
+        reverse=True
+        )
+        
+    game_names = [game['name'] for game in sorted_games]
+    
+    res = {"games": game_names[:50]}
+    return game_names[:50]
 
 @ext_integration_router.put('/steam/{user_id}/games', description='Обновляет данные из Steam')
 async def fetch_users_games(user_id: int, steam_service: Annotated[SteamService, Depends(get_steam_service)]):

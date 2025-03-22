@@ -57,7 +57,7 @@ async def get_cached_avatar_url(id: int, redis_controller: RedisController, url:
         'get_object',
         Params={'Bucket': 'user.media',
                 'Key': file_key},
-        ExpiresIn=900,  # Срок действия URL (15 min)
+        ExpiresIn=60,  # Срок действия URL (15 min)
     )
     
     await redis_controller.redis.set(cache_key, json.dumps(presigned_url), ex=900)

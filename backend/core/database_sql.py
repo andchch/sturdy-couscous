@@ -10,7 +10,6 @@ from backend.core.config import get_db_uri
 # from core.config import get_db_uri # for alembic
 
 DATABASE_URI = get_db_uri()
-# TODO: Delete on prod
 DATABASE_URI = 'sqlite+aiosqlite:///db.sqlite'
 
 async_engine = create_async_engine(url=DATABASE_URI)
@@ -20,7 +19,7 @@ unique_str = Annotated[str, mapped_column(unique=True)]
 idx_str = Annotated[str, mapped_column(unique=True, index=True)]
 not_uniuq_idx_str = Annotated[int, mapped_column(nullable=False, index=True)]
 not_null_str = Annotated[str, mapped_column(nullable=False)]
-weight_str = Annotated[float, mapped_column(default=0.2)]
+weight = Annotated[float, mapped_column(default=0.2)]
 
 
 class Base(AsyncAttrs, DeclarativeBase):

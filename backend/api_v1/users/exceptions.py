@@ -12,17 +12,21 @@ user_not_exists_exception = HTTPException(
 )
 
 self_follow_exception = HTTPException(
-    status_code=status.HTTP_400_BAD_REQUEST, 
-     detail='Self follow')
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Self follow')
 
 not_followed_exception = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST, 
-     detail='Not followed')
+    detail='Not followed')
 
 already_followed_exception = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
-     detail='Already followed')
+    detail='Already followed')
 
 busy_username_exception = HTTPException(
     status_code=status.HTTP_409_CONFLICT,
-     detail='Username is taken')
+    detail='Username is taken')
+
+avatar_file_exception = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Avatar file does not exist or corrupted')

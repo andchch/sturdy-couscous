@@ -2,17 +2,9 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from backend.api_v1.posts.models_sql import Post
-from backend.api_v1.users.enums import RatingEnum, PlatformEnum
-from backend.api_v1.games.enums import GenreEnum
-from backend.core.database_sql import Base, unique_str, idx_str, not_null_str, weight_str
-
-
-user_platform_association_table = Table(
-    'user_platform_association',
-    Base.metadata,
-    Column('user_id', ForeignKey('users.id'), nullable=False),
-    Column('platform_id', ForeignKey('platforms.id'), nullable=False))
+from backend.api_v1.users.enums import GenderEnum, RatingEnum
+from backend.core.database_sql import Base, unique_str, idx_str, weight
+from backend.api_v1.external_integration.models_sql import SteamProfile
 
 user_genre_association_table = Table(
     'user_genre_association',
@@ -21,11 +13,8 @@ user_genre_association_table = Table(
     Column('genre_id', ForeignKey('genres.id'), nullable=False))
 
 class Genre(Base):
-    name: Mapped[GenreEnum]
+    name: Mapped[str]
 
-class Platform(Base):
-    name: Mapped[PlatformEnum]
-    
 class UserFollow(Base):
     id = None
     follower_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
@@ -36,107 +25,123 @@ class UserFollow(Base):
 
     __table_args__ = (UniqueConstraint('follower_id', 'followed_id', name='uq_user_follow'),)
     
-class UserContacts(Base):
+class UserContact(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
-    vk: Mapped[str | None]
+    
     telegram: Mapped[str | None]
     steam: Mapped[str | None]
     discord: Mapped[str | None]
     
     user: Mapped['User'] = relationship('User', back_populates='contacts')
     
-class UserWeights(Base):
+class UserWeight(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
-    # --- Weights ---
-    purpose_weight: Mapped[weight_str]
-    self_assessment_lvl_weight: Mapped[weight_str]
-    preferred_communication_weight: Mapped[weight_str]
-    preferred_platforms_weight: Mapped[weight_str]
+
+    purpose_weight: Mapped[weight]
+    self_assessment_lvl_weight: Mapped[weight]
+    preferred_communication_weight: Mapped[weight]
+    preferred_platforms_weight: Mapped[weight]
     # ---- NoSQL ----
-    playtime_weight: Mapped[weight_str]
-    hours_per_week_weight: Mapped[weight_str]
-    preferred_days_weight: Mapped[weight_str]
-    preferred_genres_weight: Mapped[weight_str]
-    # --- Weights ---
+    playtime_weight: Mapped[weight]
+    hours_per_week_weight: Mapped[weight]
+    preferred_days_weight: Mapped[weight]
+    preferred_genres_weight: Mapped[weight]
     
     user: Mapped['User'] = relationship('User', back_populates='weights')
     
+class GamePlaytime(Base):
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    game_name: Mapped[str]
+    playtime_hours: Mapped[float]
+    
+    user: Mapped['User'] = relationship('User', back_populates='game_playtimes')
+    
+    __table_args__ = (UniqueConstraint('user_id', 'game_name', name='uq_user_game_playtime'),)
+
 class UserInfo(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), unique=True)
     
-    # purpose: Mapped[PurposeEnum | None]
-    # self_assessment_lvl: Mapped[SelfAssessmentLvlEnum | None]
-    # preferred_communication: Mapped[CommunicationTypeEnum | None]
     purpose: Mapped[str | None]
-    self_assessment_lvl: Mapped[str | None]
     preferred_communication: Mapped[str | None]
-    
-    hours_per_week: Mapped[int | None]
+    preferred_days: Mapped[str | None]
+    preferred_time: Mapped[str | None]
     
     user: Mapped['User'] = relationship('User', back_populates='info')
     
+class UserRating(Base):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rater_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    rated_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
+    rating: Mapped[RatingEnum]
+    comment: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    
+    rater: Mapped['User'] = relationship('User', foreign_keys=[rater_id], back_populates='ratings_given')
+    rated: Mapped['User'] = relationship('User', foreign_keys=[rated_id], back_populates='ratings_received')
+    
+    __table_args__ = (
+        UniqueConstraint('rater_id', 'rated_id', name='uq_user_rating'),
+    )
+
 class User(Base):
     username: Mapped[unique_str]
     email: Mapped[idx_str]
     hashed_password: Mapped[str]
     
-    # gender: Mapped[GenderEnum | None]
-    gender: Mapped[str | None]
+    gender: Mapped[GenderEnum | None]
+    dob: Mapped[datetime | None]
+    avatar_url: Mapped[str] = mapped_column(default='empty')
+    description: Mapped[str | None]
+    timezone: Mapped[str | None]
     
-    dof: Mapped[datetime | None]
-    avatar_url: Mapped[str | None]
+    preferred_genres: Mapped[list[Genre]] = relationship(
+        secondary=user_genre_association_table
+    )
     
     steam_profile: Mapped['SteamProfile'] = relationship(
-        'SteamProfile', back_populates='user', uselist=False, cascade='all, delete-orphan'
+        'SteamProfile', back_populates='user', uselist=False, 
+        cascade='all, delete-orphan'
     )
     
-    contacts: Mapped['UserContacts'] = relationship(
-        'UserContacts', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    contacts: Mapped['UserContact'] = relationship(
+        'UserContact', back_populates='user', uselist=False,
+        cascade='all, delete-orphan'
     )
     
-    weights: Mapped['UserWeights'] = relationship(
-        'UserWeights', back_populates='user', uselist=False, cascade='all, delete-orphan'
+    weights: Mapped['UserWeight'] = relationship(
+        'UserWeight', back_populates='user', uselist=False,
+        cascade='all, delete-orphan'
     )
     
     info: Mapped['UserInfo'] = relationship(
-        'UserInfo', back_populates='user', uselist=False, cascade='all, delete-orphan'
+        'UserInfo', back_populates='user', uselist=False, 
+        cascade='all, delete-orphan'
     )
     
     following: Mapped[list['UserFollow']] = relationship(
-        'UserFollow', foreign_keys=[UserFollow.follower_id], back_populates='follower', cascade='all, delete-orphan'
+        'UserFollow', foreign_keys=[UserFollow.follower_id], 
+        back_populates='follower', cascade='all, delete-orphan'
     )
     
     followers: Mapped[list['UserFollow']] = relationship(
-        'UserFollow', foreign_keys=[UserFollow.followed_id], back_populates='followed', cascade='all, delete-orphan'
+        'UserFollow', foreign_keys=[UserFollow.followed_id],
+        back_populates='followed', cascade='all, delete-orphan'
     )
     
-    preferred_genres: Mapped[list[Genre]] = relationship(secondary=user_genre_association_table)
-    preferred_platforms: Mapped[list[Platform]] = relationship(secondary=user_platform_association_table)
-    
-    interactions_as_user_1: Mapped[list['UserInteraction']] = relationship(back_populates='user_1',
-                                                                            foreign_keys='UserInteraction.user_1_id')
-    interactions_as_user_2: Mapped[list['UserInteraction']] = relationship(back_populates='user_2',
-                                                                            foreign_keys='UserInteraction.user_2_id')
-    
-    posts: Mapped[list['Post']] = relationship(
-        'Post', back_populates='author', cascade='all, delete-orphan'
+    game_playtimes: Mapped[list['GamePlaytime']] = relationship(
+        'GamePlaytime', back_populates='user',
+        cascade='all, delete-orphan'
     )
     
-    communities: Mapped[list['Community']] = relationship(
-        'Community',
-        secondary='community_memberships',
-        back_populates='members',
+    ratings_given: Mapped[list['UserRating']] = relationship(
+        'UserRating', foreign_keys=[UserRating.rater_id],
+        back_populates='rater', cascade='all, delete-orphan'
     )
     
-class UserInteraction(Base):
-    user_1_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
-    user_2_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
-    game: Mapped[not_null_str]
-    user_1_rating: Mapped[RatingEnum]
-    user_2_rating: Mapped[RatingEnum]
+    ratings_received: Mapped[list['UserRating']] = relationship(
+        'UserRating', foreign_keys=[UserRating.rated_id],
+        back_populates='rated', cascade='all, delete-orphan'
+    )
     
-    user_1: Mapped['User'] = relationship(back_populates='interactions_as_user_1',
-                                                 foreign_keys=[user_1_id])
-    user_2: Mapped['User'] = relationship(back_populates='interactions_as_user_1',
-                                                 foreign_keys=[user_2_id])
+
     
